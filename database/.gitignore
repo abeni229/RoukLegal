@@ -1,0 +1,21 @@
+# Laravel standard
+/vendor
+/node_modules
+/.env
+/public/storage
+/storage/*.key
+
+# Fichiers IDE / éditeurs
+/.idea
+/.vscode
+
+# Logs et fichiers temporaires
+npm-debug.log
+yarn-error.log
+*.sqlite*
+*.log
+*.tmp
+
+# Mac / Windows
+.DS_Store
+Thumbs.db
