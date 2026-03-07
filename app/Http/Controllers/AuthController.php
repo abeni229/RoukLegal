@@ -51,22 +51,31 @@ class AuthController extends Controller
     /**
      * Authenticate a user.
      */
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'mot_de_passe' => 'required',
-        ]);
+   public function login(Request $request)
+{
+   
+    $credentials = $request->validate([
+        'email'       => 'required|email',
+        'mot_de_passe' => 'required',
+    ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+    $user = User::where('email', $credentials['email'])->first();
 
-        if ($user && Hash::check($credentials['mot_de_passe'], $user->mot_de_passe)) {
-            Auth::login($user);
-            return redirect()->intended('/');
-        }
+    if ($user && Hash::check($credentials['mot_de_passe'], $user->mot_de_passe)) {
+        Auth::login($user);
 
-        return back()->withErrors(['email' => 'Identifiants incorrects'])->withInput();
+        // ✅ Redirection directe selon le rôle — sans passer par '/'
+        return match($user->role) {
+            'admin'           => redirect()->route('admin.dashboard'),
+            'acteur_juridique' => redirect()->route('acteur.dashboard'),
+            'client'          => redirect()->route('client.dashboard'),
+            default           => redirect()->route('auth.selectRole'),
+        };
     }
+
+    return back()->withErrors(['email' => 'Identifiants incorrects'])->withInput();
+     
+}
 
     /**
      * Show role selection form.

@@ -1,390 +1,318 @@
 @extends('layouts.app')
-@section('title', $article->title)
+
+@section('title', $article->title . ' — RoukLegal')
+
+@section('page-title')
+  Articles <span>/ Lecture</span>
+@endsection
+
+@section('topbar-actions')
+  <a href="{{ route('articles.index') }}" class="rl-btn-outline">
+    <i class="fas fa-arrow-left"></i> Retour aux articles
+  </a>
+@endsection
+
 @section('content')
-<div class="row mb-4">
-    <div class="col-12">
-        <a href="{{ route('articles.index') }}" class="btn btn-sm btn-secondary mb-3">
-            <i class="fas fa-arrow-left"></i> Retour aux articles
-        </a>
-        <h1 style="color: var(--dark); font-weight: 700; margin-bottom: 1rem;">{{ $article->title }}</h1>
-        <div style="color: #6b7280; font-size: 0.95rem;">
-            <small><i class="fas fa-user"></i> Par <strong>{{ $article->user->nom }}</strong> ({{ $article->user->profession?->nom ?? 'N/A' }})</small>
-            &nbsp;|&nbsp;
-            <small><i class="fas fa-calendar"></i> {{ $article->created_at->format('d/m/Y') }}</small>
-            &nbsp;|&nbsp;
-            <small><i class="fas fa-eye"></i> {{ $article->views }} vues</small>
+<div style="display:grid;grid-template-columns:1fr 320px;gap:28px;align-items:start;">
+
+  {{-- ARTICLE PRINCIPAL --}}
+  <div style="display:flex;flex-direction:column;gap:24px;">
+
+    {{-- Contenu --}}
+    <div class="rl-card fade-up">
+      <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);">
+        <h1 style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--ink);line-height:1.4;margin-bottom:14px;">
+          {{ $article->title }}
+        </h1>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:.78rem;color:var(--txt-muted);">
+          <span><i class="fas fa-user" style="margin-right:4px;color:var(--gold);"></i>{{ $article->user->nom }}</span>
+          <span><i class="fas fa-briefcase" style="margin-right:4px;color:var(--gold);"></i>{{ $article->user->profession?->nom ?? 'Expert' }}</span>
+          <span><i class="fas fa-calendar" style="margin-right:4px;color:var(--gold);"></i>{{ $article->created_at->format('d/m/Y') }}</span>
+          <span><i class="fas fa-eye" style="margin-right:4px;color:var(--gold);"></i>{{ $article->views }} vue(s)</span>
         </div>
+      </div>
+      <div style="line-height:1.9;color:var(--txt);font-size:.95rem;word-wrap:break-word;">
+        {!! nl2br(e($article->content)) !!}
+      </div>
     </div>
+
+    {{-- SECTION NOTATION (client uniquement) --}}
+    @if(Auth::check() && Auth::user()->role === 'client')
+    <div class="rl-card fade-up" style="animation-delay:.1s;">
+      <div class="rl-card-header">
+        <span class="rl-card-title">Évaluer cet article</span>
+        <span class="rl-badge rl-badge-gold">Votre avis compte</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div id="starRating" style="display:flex;gap:6px;">
+          @for($i=1;$i<=5;$i++)
+          <span class="star" data-value="{{ $i }}" style="font-size:1.8rem;cursor:pointer;color:var(--border);transition:color .15s;">★</span>
+          @endfor
+        </div>
+        <div id="ratingLabel" style="font-size:.85rem;color:var(--txt-muted);">Cliquez pour noter</div>
+      </div>
+      <form method="POST" action="#" id="ratingForm" style="margin-top:14px;display:none;">
+        @csrf
+        <input type="hidden" name="note" id="ratingValue">
+        <div class="rl-form-group">
+          <label class="rl-label" for="ratingComment">Commentaire (optionnel)</label>
+          <textarea id="ratingComment" name="commentaire" class="rl-textarea" rows="3" placeholder="Partagez votre avis sur cet article…"></textarea>
+        </div>
+        <button type="submit" class="rl-btn"><i class="fas fa-star"></i> Soumettre l'évaluation</button>
+      </form>
+    </div>
+    @endif
+
+    {{-- QUESTIONS --}}
+    <div class="rl-card fade-up" style="animation-delay:.15s;">
+      <div class="rl-card-header">
+        <span class="rl-card-title">Questions des clients</span>
+        <span class="rl-badge rl-badge-blue">{{ $article->questions()->count() }} question(s)</span>
+      </div>
+
+      @if($article->questions()->count() > 0)
+      <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px;">
+        @foreach($article->questions()->with(['user','reponses'])->get() as $q)
+        <div style="padding:16px;background:var(--surface2);border-radius:10px;border-left:3px solid {{ $q->reponses->count()>0 ? 'var(--green)' : 'var(--orange)' }};" data-question-id="{{ $q->id }}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;">
+            <div>
+              <span style="font-size:.82rem;font-weight:600;color:var(--ink);">{{ $q->user->nom }}</span>
+              <span style="font-size:.72rem;color:var(--txt-muted);margin-left:8px;">{{ $q->created_at->diffForHumans() }}</span>
+            </div>
+            @if(Auth::user()->id === $article->user_id && Auth::user()->role === 'acteur_juridique')
+              @if($q->reponses->count() > 0)
+                <span class="rl-badge rl-badge-green">✓ Répondu</span>
+              @else
+                <button class="rl-btn" style="padding:4px 12px;font-size:.75rem;" onclick="openModal({{ $q->id }},'{{ addslashes($q->titre) }}','')">
+                  <i class="fas fa-reply"></i> Répondre
+                </button>
+              @endif
+            @endif
+          </div>
+          <div style="font-size:.88rem;color:var(--txt);margin-bottom:8px;">{{ $q->titre }}</div>
+          @if($q->contenu)
+          <div style="font-size:.82rem;color:var(--txt-muted);">{{ $q->contenu }}</div>
+          @endif
+          @if($q->reponses->count() > 0)
+          <div style="margin-top:12px;padding:12px 14px;background:var(--green-dim);border-radius:8px;border-left:3px solid var(--green);">
+            <div style="font-size:.72rem;font-weight:600;color:var(--green);margin-bottom:6px;"><i class="fas fa-check-circle"></i> Réponse de {{ $article->user->nom }}</div>
+            <div style="font-size:.85rem;color:var(--txt);line-height:1.6;">{{ $q->reponses->first()->contenu }}</div>
+          </div>
+          @endif
+        </div>
+        @endforeach
+      </div>
+      @else
+      <div style="text-align:center;padding:24px;color:var(--txt-muted);font-size:.88rem;margin-bottom:20px;">
+        <div style="font-size:2rem;margin-bottom:8px;">💬</div>
+        Aucune question pour le moment. Soyez le premier !
+      </div>
+      @endif
+
+      {{-- Formulaire question client --}}
+      @if(Auth::check() && Auth::user()->role === 'client')
+        @if($canAskQuestion)
+        <div style="padding-top:20px;border-top:1px solid var(--border);">
+          <div style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--ink);margin-bottom:16px;">Poser une question</div>
+          <form method="POST" action="{{ route('articles.storeQuestion', $article->id) }}">
+            @csrf
+            <div class="rl-form-group">
+              <label class="rl-label" for="titre">Votre question <span style="color:var(--red)">*</span></label>
+              <input type="text" id="titre" name="titre" class="rl-input" placeholder="Posez votre question clairement…" required value="{{ old('titre') }}">
+              @error('titre')<div style="font-size:.75rem;color:var(--red);margin-top:4px;">{{ $message }}</div>@enderror
+            </div>
+            <div class="rl-form-group">
+              <label class="rl-label" for="contenu">Détails (optionnel)</label>
+              <textarea id="contenu" name="contenu" class="rl-textarea" rows="3" placeholder="Donnez plus de contexte…">{{ old('contenu') }}</textarea>
+            </div>
+            <button type="submit" class="rl-btn"><i class="fas fa-paper-plane"></i> Envoyer la question</button>
+          </form>
+        </div>
+        @else
+        <div style="padding:20px;background:var(--orange-dim);border-radius:10px;border:1px solid rgba(230,126,34,.25);text-align:center;">
+          <div style="font-size:1.5rem;margin-bottom:8px;">🔒</div>
+          <div style="font-weight:600;color:var(--orange);margin-bottom:6px;">Accès limité</div>
+          <div style="font-size:.83rem;color:var(--txt-muted);margin-bottom:14px;">Souscrivez pour poser des questions aux experts.</div>
+          <button class="rl-btn" onclick="openSubscriptionModal()"><i class="fas fa-credit-card"></i> Accéder au service</button>
+        </div>
+        @endif
+      @elseif(!Auth::check())
+      <div class="rl-alert rl-alert-info">
+        <i class="fas fa-info-circle"></i>
+        <a href="{{ route('login') }}" style="color:var(--blue);font-weight:600;">Connectez-vous</a> pour poser une question.
+      </div>
+      @endif
+
+    </div><!-- /questions card -->
+
+  </div><!-- /colonne gauche -->
+
+  {{-- COLONNE DROITE --}}
+  <div style="display:flex;flex-direction:column;gap:20px;position:sticky;top:calc(var(--topbar-h) + 24px);">
+
+    {{-- Profil auteur --}}
+    <div class="rl-card fade-up" style="animation-delay:.05s;text-align:center;">
+      <div style="width:72px;height:72px;border-radius:50%;background:var(--gold-dim);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto 12px;">
+        @if($article->user->photo_professionnelle)
+          <img src="{{ asset('storage/'.$article->user->photo_professionnelle) }}" style="width:100%;height:100%;object-fit:cover;"/>
+        @else
+          <span style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--gold);">{{ strtoupper(substr($article->user->nom,0,2)) }}</span>
+        @endif
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--ink);">{{ $article->user->nom }}</div>
+      <div style="margin:6px 0;"><span class="rl-badge rl-badge-gold">{{ $article->user->profession?->nom ?? 'Expert juridique' }}</span></div>
+      @if($article->user->description)
+      <div style="font-size:.78rem;color:var(--txt-muted);line-height:1.5;text-align:left;margin:10px 0;">
+        {{ Str::limit($article->user->description, 150) }}
+      </div>
+      @endif
+      @if(Auth::check() && Auth::user()->role === 'client')
+      <a href="{{ route('messages.conversation', $article->user->id) }}" class="rl-btn" style="width:100%;justify-content:center;margin-top:8px;">
+        <i class="fas fa-comments"></i> Contacter
+      </a>
+      @endif
+    </div>
+
+    {{-- Articles connexes --}}
+    @php $related = $article->user->articles()->where('id','!=',$article->id)->limit(3)->get(); @endphp
+    @if($related->count() > 0)
+    <div class="rl-card fade-up" style="animation-delay:.1s;">
+      <div class="rl-card-header"><span class="rl-card-title">Articles du même auteur</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        @foreach($related as $r)
+        <a href="{{ route('articles.show', $r->id) }}" style="display:block;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);text-decoration:none;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:.83rem;font-weight:500;color:var(--ink);margin-bottom:4px;">{{ Str::limit($r->title, 50) }}</div>
+          <div style="font-size:.72rem;color:var(--txt-muted);"><i class="fas fa-eye" style="margin-right:4px;"></i>{{ $r->views }} vue(s)</div>
+        </a>
+        @endforeach
+      </div>
+    </div>
+    @endif
+
+  </div><!-- /colonne droite -->
+
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-body">
-                <div style="line-height: 1.8; color: #374151; word-wrap: break-word;">
-                    {!! nl2br(e($article->content)) !!}
-                </div>
-            </div>
-        </div>
-
-        <!-- Questions Section -->
-        <div class="card mb-4">
-            <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; font-weight: 700;">
-                <i class="fas fa-comments"></i> Questions des clients ({{ $article->questions()->count() }})
-            </div>
-            <div class="card-body">
-                @if($article->questions()->count() > 0)
-                    @foreach($article->questions()->with('user')->get() as $question)
-                        <div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1.5rem; margin-bottom: 1.5rem;" data-question-id="{{ $question->id }}">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <strong style="color: var(--dark);">{{ $question->user->nom }}</strong>
-                                    <small style="color: #6b7280;">
-                                        • {{ $question->created_at->diffForHumans() }}
-                                    </small>
-                                </div>
-                                @if(Auth::user() && Auth::user()->id === $article->user_id && Auth::user()->role === 'acteur_juridique')
-                                    @if($question->reponses()->count() > 0)
-                                        <span class="badge bg-success">Répondu</span>
-                                    @else
-                                        <button class="btn btn-sm btn-primary" onclick="showResponseForm({{ $question->id }})">
-                                            <i class="fas fa-reply"></i> Répondre
-                                        </button>
-                                    @endif
-                                @endif
-                            </div>
-                            <p style="color: #374151; margin-bottom: 0;">{{ $question->titre }}</p>
-                            @if(Auth::user() && Auth::user()->id === $article->user_id && Auth::user()->role === 'acteur_juridique' && $question->reponses()->count() > 0)
-                                <div class="border-start border-success border-3 ps-3 mt-2">
-                                    <h6 class="text-success mb-2">Votre réponse</h6>
-                                    <p class="mb-1">{{ $question->reponses->first()->contenu }}</p>
-                                    <small class="text-muted">
-                                        Répondu le {{ $question->reponses->first()->created_at->format('d/m/Y à H:i') }}
-                                    </small>
-                                </div>
-                            @endif
-                        </div>
-                    @endforeach
-                @else
-                    <p style="color: #6b7280; text-align: center; padding: 2rem 0; margin: 0;">
-                        <i class="fas fa-comment-slash" style="font-size: 2rem; opacity: 0.5; display: block; margin-bottom: 0.5rem;"></i>
-                        Aucune question pour le moment
-                    </p>
-                @endif
-            </div>
-        </div>
-
-        @if(Auth::user() && Auth::user()->id === $article->user_id && Auth::user()->role === 'acteur_juridique')
-            <a href="{{ route('acteur.questions') }}" class="btn btn-info mb-3">
-                <i class="fas fa-question-circle"></i> Gérer toutes mes questions
-            </a>
-        @endif
-
-        <!-- New Question Form -->
-        @if(Auth::user() && Auth::user()->role === 'client')
-            @if($canAskQuestion)
-                <div class="card">
-                    <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; font-weight: 700;">
-                        <i class="fas fa-question-circle"></i> Poser une question
-                    </div>
-                    <div class="card-body">
-                        @if(session('status'))
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <i class="fas fa-check-circle"></i> {{ session('status') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
-
-                        <form method="POST" action="{{ route('articles.storeQuestion', $article->id) }}">
-                            @csrf
-                            <div class="mb-3">
-                                <label for="titre" class="form-label">Votre question:</label>
-                                <input type="text" id="titre" name="titre" class="form-control" 
-                                       placeholder="Posez votre question..." required value="{{ old('titre') }}">
-                                @error('titre')
-                                    <div class="alert alert-danger mt-2">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label for="contenu" class="form-label">Description (optionnel):</label>
-                                <textarea name="contenu" id="contenu" class="form-control" rows="4" 
-                                          placeholder="Donnez plus de détails...">{{ old('contenu') }}</textarea>
-                                @error('contenu')
-                                    <div class="alert alert-danger mt-2">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-send"></i> Envoyer la question
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            @else
-                <div class="card border-warning">
-                    <div class="card-body text-center">
-                        <i class="fas fa-lock fa-2x text-warning mb-3"></i>
-                        <h5 class="card-title">Accès limité</h5>
-                        <p class="card-text">Pour poser des questions aux experts, vous devez souscrire à notre service.</p>
-                        <button class="btn btn-warning" onclick="showSubscriptionModal()">
-                            <i class="fas fa-credit-card"></i> Souscrire maintenant
-                        </button>
-                    </div>
-                </div>
-            @endif
-        @else
-            <div class="alert alert-info" role="alert">
-                <i class="fas fa-info-circle"></i> 
-                <strong>Vous devez être connecté en tant que client pour poser une question.</strong>
-                <a href="{{ route('login') }}" class="alert-link">Se connecter</a>
-            </div>
-        @endif
+{{-- MODAL RÉPONSE (acteur) --}}
+<div id="responseModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:var(--radius);padding:32px;width:100%;max-width:580px;margin:24px;animation:fadeUp .25s ease;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--ink);">Répondre à la question</div>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--txt-muted);">✕</button>
     </div>
+    <form method="POST" action="" id="responseForm">
+      @csrf
+      <div class="rl-form-group">
+        <label class="rl-label">Question</label>
+        <div id="modalQuestion" style="padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);font-size:.88rem;color:var(--txt);"></div>
+      </div>
+      <div class="rl-form-group">
+        <label class="rl-label">Votre réponse <span style="color:var(--red)">*</span></label>
+        <textarea class="rl-textarea" id="responseContent" name="contenu" rows="5" required placeholder="Répondez clairement…"></textarea>
+      </div>
+      <div id="modalError" class="rl-alert rl-alert-error" style="display:none;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button type="button" onclick="closeModal()" class="rl-btn-outline">Annuler</button>
+        <button type="submit" class="rl-btn"><i class="fas fa-paper-plane"></i> Envoyer</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white;">
-                    <i class="fas fa-user-tie" style="font-size: 2.5rem;"></i>
-                </div>
-                <h6 style="color: var(--dark); font-weight: 700; margin-bottom: 0.5rem;">{{ $article->user->nom }}</h6>
-                <p style="color: var(--primary); font-weight: 600; margin-bottom: 1rem;">{{ $article->user->profession?->nom ?? 'Professionnel' }}</p>
-                
-                @if($article->user->description)
-                    <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; text-align: left;">
-                        <small style="color: #6b7280;">
-                            {{ Str::limit($article->user->description, 200) }}
-                        </small>
-                    </div>
-                @endif
-
-                <a href="#" class="btn btn-primary w-100 mb-2" onclick="alert('Fonctionnalité à implémenter'); return false;">
-                    <i class="fas fa-envelope"></i> Contacter
-                </a>
-                <a href="#" class="btn btn-outline-primary w-100" onclick="alert('Fonctionnalité à implémenter'); return false;">
-                    <i class="fas fa-user-plus"></i> Ajouter
-                </a>
-            </div>
-        </div>
-
-        <div class="card mt-3">
-            <div class="card-body">
-                <h6 class="card-title" style="font-weight: 700; color: var(--dark); margin-bottom: 1rem;">
-                    <i class="fas fa-star"></i> Notation
-                </h6>
-                <div style="text-align: center; font-size: 1.5rem;">
-                    <span style="color: #fbbf24;">★★★★★</span>
-                    <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.9rem;">4.8/5 (120 avis)</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="card mt-3">
-            <div class="card-body">
-                <h6 class="card-title" style="font-weight: 700; color: var(--dark); margin-bottom: 1rem;">
-                    <i class="fas fa-chart-bar"></i> Articles connexes
-                </h6>
-                @php
-                    $relatedArticles = $article->user->articles()
-                        ->where('id', '!=', $article->id)
-                        ->limit(3)
-                        ->get();
-                @endphp
-                
-                @if($relatedArticles->count() > 0)
-                    @foreach($relatedArticles as $related)
-                        <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;">
-                            <a href="{{ route('articles.show', $related->id) }}" style="color: var(--primary); text-decoration: none; font-weight: 600;">
-                                {{ Str::limit($related->title, 40) }}
-                            </a>
-                            <small style="display: block; color: #6b7280; margin-top: 0.25rem;">
-                                <i class="fas fa-eye"></i> {{ $related->views }}
-                            </small>
-                        </div>
-                    @endforeach
-                @else
-                    <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">
-                        Pas d'autres articles
-                    </p>
-                @endif
-            </div>
-        </div>
+{{-- MODAL ABONNEMENT --}}
+<div id="subscriptionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:var(--radius);padding:32px;width:100%;max-width:480px;margin:24px;animation:fadeUp .25s ease;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--ink);">Accéder au service</div>
+      <button onclick="closeSubscriptionModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--txt-muted);">✕</button>
     </div>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div style="padding:20px;background:var(--green-dim);border-radius:10px;border:1px solid rgba(39,174,96,.25);text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:8px;">🎁</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--green);margin-bottom:6px;">Essai gratuit — 2 semaines</div>
+        <div style="font-size:.82rem;color:var(--txt-muted);margin-bottom:14px;">Accès complet, sans engagement</div>
+        <button class="rl-btn" style="background:var(--green);width:100%;justify-content:center;" onclick="startTrial()">
+          <i class="fas fa-play"></i> Commencer l'essai
+        </button>
+      </div>
+      <div style="padding:20px;background:var(--gold-dim);border-radius:10px;border:1px solid rgba(201,168,76,.25);text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:8px;">⭐</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold);margin-bottom:6px;">Abonnement mensuel</div>
+        <div style="font-size:.82rem;color:var(--txt-muted);margin-bottom:14px;">Accès illimité à toutes les fonctionnalités</div>
+        <button class="rl-btn" style="width:100%;justify-content:center;" onclick="alert('Paiement à implémenter')">
+          <i class="fas fa-credit-card"></i> Souscrire
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 @endsection
 
-<!-- Modal de réponse (pour acteurs) -->
-<div class="modal fade" id="responseModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Répondre à la question</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST" action="" id="responseForm">
-                @csrf
-                <div class="modal-body">
-                    <div id="responseError" class="alert alert-danger" style="display: none;"></div>
-                    <div class="mb-3">
-                        <label for="responseTitle" class="form-label">Question</label>
-                        <div id="responseTitle" class="form-control-plaintext" style="border: 1px solid #dee2e6; padding: 0.375rem 0.75rem; border-radius: 0.375rem; background: #f8f9fa;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="responseContent" class="form-label">Votre réponse</label>
-                        <textarea class="form-control" id="responseContent" name="contenu" rows="6" required
-                                  placeholder="Fournissez une réponse claire et complète à la question..."></textarea>
-                        <div class="form-text">Minimum 10 caractères, maximum 5000 caractères.</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane"></i> Envoyer la réponse
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal d'abonnement -->
-<div class="modal fade" id="subscriptionModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Accès aux réponses</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Pour accéder aux réponses des experts et poser des questions, vous devez souscrire à notre service.</p>
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card border-primary">
-                            <div class="card-body text-center">
-                                <h5 class="card-title">Abonnement Mensuel</h5>
-                                <h3 class="text-primary mb-3">50€<small class="text-muted">/mois</small></h3>
-                                <p class="card-text">
-                                    <i class="fas fa-check text-success"></i> Accès illimité aux réponses<br>
-                                    <i class="fas fa-check text-success"></i> Consultation d'articles illimitée<br>
-                                    <i class="fas fa-check text-success"></i> Questions directes aux experts<br>
-                                    <i class="fas fa-check text-success"></i> Support prioritaire
-                                </p>
-                                <button class="btn btn-primary" onclick="subscribe()">
-                                    <i class="fas fa-credit-card"></i> Souscrire maintenant
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <div class="card border-success">
-                            <div class="card-body text-center">
-                                <h5 class="card-title text-success">Essai Gratuit</h5>
-                                <h4 class="text-success mb-3">2 semaines gratuites</h4>
-                                <p class="card-text">
-                                    <i class="fas fa-check text-success"></i> Accès complet pendant 14 jours<br>
-                                    <i class="fas fa-check text-success"></i> Toutes les fonctionnalités<br>
-                                    <i class="fas fa-check text-success"></i> Sans engagement<br>
-                                    <i class="fas fa-info-circle text-info"></i> Annulable à tout moment
-                                </p>
-                                <button class="btn btn-success" onclick="startFreeTrial()">
-                                    <i class="fas fa-play"></i> Commencer l'essai gratuit
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle"></i> Essai gratuit de 2 semaines disponible pour les nouveaux utilisateurs.
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+@section('scripts')
 <script>
-function showSubscriptionModal() {
-    var modal = new bootstrap.Modal(document.getElementById('subscriptionModal'));
-    modal.show();
+// Modal réponse
+function openModal(qId, qTitle, content) {
+  document.getElementById('responseForm').action = `/acteur/questions/${qId}/respond`;
+  document.getElementById('modalQuestion').textContent = qTitle;
+  document.getElementById('responseContent').value = content;
+  document.getElementById('modalError').style.display = 'none';
+  document.getElementById('responseModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
-
-function subscribe() {
-    alert('Fonctionnalité de paiement à implémenter');
-    // Ici on intégrera Stripe ou un autre système de paiement
+function closeModal() {
+  document.getElementById('responseModal').style.display = 'none';
+  document.body.style.overflow = '';
 }
-
-function startFreeTrial() {
-    if (confirm('Êtes-vous sûr de vouloir commencer votre essai gratuit de 2 semaines ?')) {
-        fetch('/client/start-trial', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({}),
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-            if (data.success) {
-                window.location.reload();
-            }
-        });
-    }
-}
-
-// response modal helpers (same as acteur.questions)
-function showResponseForm(questionId) {
-    const questionText = document.querySelector('[data-question-id="' + questionId + '"] .card-title')?.textContent || '';
-    const form = document.getElementById('responseForm');
-    form.action = `/acteur/questions/${questionId}/respond`;
-    document.getElementById('responseTitle').textContent = questionText;
-    document.getElementById('responseContent').value = '';
-    document.getElementById('responseError').style.display = 'none';
-    const modal = new bootstrap.Modal(document.getElementById('responseModal'));
-    modal.show();
-}
-
-function editResponse(questionId, currentContent) {
-    const questionText = document.querySelector('[data-question-id="' + questionId + '"] .card-title')?.textContent || '';
-    const form = document.getElementById('responseForm');
-    form.action = `/acteur/questions/${questionId}/respond`;
-    document.getElementById('responseTitle').textContent = questionText;
-    document.getElementById('responseContent').value = currentContent;
-    document.getElementById('responseError').style.display = 'none';
-    const modal = new bootstrap.Modal(document.getElementById('responseModal'));
-    modal.show();
-}
-
-// validate response form
+document.getElementById('responseModal')?.addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
 document.getElementById('responseForm')?.addEventListener('submit', function(e) {
-    const errorDiv = document.getElementById('responseError');
-    const content = document.getElementById('responseContent');
-    if (content.value.trim().length < 10) {
-        e.preventDefault();
-        errorDiv.textContent = 'La réponse doit contenir au minimum 10 caractères.';
-        errorDiv.style.display = 'block';
-    } else if (content.value.trim().length > 5000) {
-        e.preventDefault();
-        errorDiv.textContent = 'La réponse ne doit pas dépasser 5000 caractères.';
-        errorDiv.style.display = 'block';
-    }
-});// existing subscription functions continue
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Essai gratuit activé ! Vous avez maintenant accès à toutes les fonctionnalités pendant 2 semaines.');
-                location.reload();
-            } else {
-                alert('Erreur: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            alert('Une erreur est survenue. Veuillez réessayer.');
-        });
-    }
+  const v = document.getElementById('responseContent').value.trim();
+  const err = document.getElementById('modalError');
+  if(v.length<10){ e.preventDefault(); err.textContent='Minimum 10 caractères.'; err.style.display='flex'; }
+  else if(v.length>5000){ e.preventDefault(); err.textContent='Maximum 5000 caractères.'; err.style.display='flex'; }
+});
+
+// Modal abonnement
+function openSubscriptionModal() {
+  document.getElementById('subscriptionModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
+function closeSubscriptionModal() {
+  document.getElementById('subscriptionModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('subscriptionModal')?.addEventListener('click', e => { if(e.target===e.currentTarget) closeSubscriptionModal(); });
+
+// Essai gratuit
+function startTrial() {
+  fetch('{{ route("client.startTrial") }}', {
+    method: 'POST',
+    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' }
+  }).then(r=>r.json()).then(d => {
+    if(d.success) { closeSubscriptionModal(); location.reload(); }
+    else alert(d.message);
+  });
+}
+
+// Notation par étoiles
+const stars = document.querySelectorAll('.star');
+let selectedNote = 0;
+const labels = ['','Mauvais','Passable','Bien','Très bien','Excellent'];
+stars.forEach(s => {
+  s.addEventListener('mouseover', function() {
+    const v = +this.dataset.value;
+    stars.forEach((st,i) => st.style.color = i<v ? 'var(--gold)' : 'var(--border)');
+    document.getElementById('ratingLabel').textContent = labels[v];
+  });
+  s.addEventListener('mouseout', () => {
+    stars.forEach((st,i) => st.style.color = i<selectedNote ? 'var(--gold)' : 'var(--border)');
+    document.getElementById('ratingLabel').textContent = selectedNote ? labels[selectedNote] : 'Cliquez pour noter';
+  });
+  s.addEventListener('click', function() {
+    selectedNote = +this.dataset.value;
+    document.getElementById('ratingValue').value = selectedNote;
+    document.getElementById('ratingForm').style.display = 'block';
+    document.getElementById('ratingLabel').textContent = labels[selectedNote];
+  });
+});
 </script>
+@endsection

@@ -5,47 +5,100 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Question;
 use App\Models\Reponse;
+use App\Models\Paiement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class AdminController extends Controller
 {
+    /**
+     * Affiche le tableau de bord de l'administrateur.
+     */
     public function dashboard()
     {
-        $totalUsers = User::count();
-        $clients = User::where('role', 'client')->count();
-        $acteurs = User::where('role', 'acteur_juridique')->count();
-        $questions = Question::count();
-        $reponses = Reponse::count();
+        try {
+            $stats        = $this->getGeneralStats();
+            $paymentStats = $this->getPaymentStats();
 
-        // utilisateurs en essai gratuit
-        $trials = User::where('role','client')
+            return view('admin.dashboard', array_merge($stats, $paymentStats, [
+                'withSidebar' => true,
+            ]));
+        } catch (\Exception $e) {
+            Log::error('Erreur chargement dashboard admin : ' . $e->getMessage());
+
+            return redirect()->back()->with(
+                'error',
+                'Une erreur est survenue lors du chargement du tableau de bord.'
+            );
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    //  Méthodes privées
+    // -----------------------------------------------------------------------
+
+    /**
+     * Statistiques générales (utilisateurs, questions, réponses, essais).
+     */
+    private function getGeneralStats(): array
+    {
+        // Mise en cache 10 minutes pour éviter trop de requêtes
+        return Cache::remember('admin.general_stats', 600, function () {
+            return [
+                'totalUsers' => User::count(),
+                'clients'    => User::where('role', 'client')->count(),
+                'acteurs'    => User::where('role', 'acteur_juridique')->count(),
+                'questions'  => Question::count(),
+                'reponses'   => Reponse::count(),
+                'trials'     => $this->getActiveTrialsCount(),
+            ];
+        });
+    }
+
+    /**
+     * Nombre de clients actuellement en essai gratuit actif.
+     */
+    private function getActiveTrialsCount(): int
+    {
+        return User::where('role', 'client')
             ->whereNotNull('trial_end')
             ->where('trial_end', '>=', now())
             ->count();
+    }
 
-        // progression mensuelle des paiements
-        $paymentsByMonth = \App\Models\Paiement::selectRaw("DATE_FORMAT(date_paiement, '%Y-%m') as month, COUNT(*) as count, SUM(montant) as total")
-            ->groupBy('month')
-            ->orderBy('month', 'desc')
-            ->limit(6)
-            ->get();
+    /**
+     * Statistiques de paiements : progression mensuelle + répartition par méthode.
+     */
+    private function getPaymentStats(): array
+    {
+        $paymentsByMonth = Cache::remember('admin.payments_by_month', 600, function () {
+            return Paiement::selectRaw(
+                    "DATE_FORMAT(date_paiement, '%Y-%m') as month,
+                     COUNT(*) as count,
+                     SUM(montant) as total"
+                )
+                ->groupBy('month')
+                ->orderBy('month', 'desc')
+                ->limit(6)
+                ->get();
+        });
 
-        // répartition par méthode de paiement
-        $paymentsByMethod = \App\Models\Paiement::select('methode', \DB::raw('COUNT(*) as count'), \DB::raw('SUM(montant) as total'))
-            ->groupBy('methode')
-            ->get();
+        $paymentsByMethod = Cache::remember('admin.payments_by_method', 600, function () {
+            return Paiement::select(
+                    'methode',
+                    DB::raw('COUNT(*) as count'),
+                    DB::raw('SUM(montant) as total')
+                )
+                ->groupBy('methode')
+                ->get();
+        });
 
-        return view('admin.dashboard', [
-            'totalUsers' => $totalUsers,
-            'clients' => $clients,
-            'acteurs' => $acteurs,
-            'questions' => $questions,
-            'reponses' => $reponses,
-            'trials' => $trials,
-            'paymentsByMonth' => $paymentsByMonth,
+        return [
+            'paymentsByMonth'  => $paymentsByMonth,
             'paymentsByMethod' => $paymentsByMethod,
-            'withSidebar' => true
-        ]);
+        ];
     }
 }

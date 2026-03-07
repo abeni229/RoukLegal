@@ -77,6 +77,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 });
 
+// Dans le groupe auth middleware
+Route::delete('/settings', [SettingsController::class, 'destroy'])->name('settings.destroy');
+
 // Articles publiques (tous les users authentifiés peuvent lire)
 Route::middleware('auth')->group(function () {
     Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');

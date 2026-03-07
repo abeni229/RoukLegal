@@ -8,50 +8,55 @@ use Illuminate\Support\Facades\Hash;
 
 class CreateAdmin extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'admin:create {name} {email} {password?}';
+    protected $description = 'Créer un nouvel administrateur';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Create a new admin user';
-
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        $name = $this->argument('name');
-        $email = $this->argument('email');
+        $name     = $this->argument('name');
+        $email    = $this->argument('email');
         $password = $this->argument('password') ?: 'admin123';
 
-        // Vérifier si un admin existe déjà
+        // Vérifier si l'email est déjà utilisé
+        if (User::where('email', $email)->exists()) {
+            $this->error('Cet email est déjà utilisé : ' . $email);
+            return 1;
+        }
+
+        // Avertir si un admin existe déjà
         $existingAdmin = User::where('role', 'admin')->first();
         if ($existingAdmin) {
-            $this->warn('Un administrateur existe déjà: ' . $existingAdmin->email);
-            if (!$this->confirm('Voulez-vous créer un autre administrateur?')) {
-                return;
+            $this->warn('Un administrateur existe déjà : ' . $existingAdmin->email);
+            if (!$this->confirm('Voulez-vous créer un autre administrateur ?')) {
+                return 0;
             }
         }
 
-        // Créer le nouvel admin
+        // Créer l'admin — utilise les mêmes colonnes que le reste de l'app
         $admin = User::create([
-            'nom' => $name,
-            'email' => $email,
+            'nom'          => $name,
+            'email'        => $email,
             'mot_de_passe' => Hash::make($password),
-            'role' => 'admin',
+            'role'         => 'admin',
         ]);
 
-        $this->info('Administrateur créé avec succès!');
-        $this->info('Nom: ' . $admin->nom);
-        $this->info('Email: ' . $admin->email);
-        $this->info('Mot de passe: ' . $password);
+        if (!$admin) {
+            $this->error('Échec de la création. Vérifie les colonnes $fillable dans User.php.');
+            return 1;
+        }
+
+        $this->info('');
+        $this->info('✅ Administrateur créé avec succès !');
+        $this->table(
+            ['Champ', 'Valeur'],
+            [
+                ['Nom',        $admin->nom],
+                ['Email',      $admin->email],
+                ['Mot de passe', $password],
+                ['Rôle',       $admin->role],
+            ]
+        );
+        $this->warn('⚠️  Pensez à changer le mot de passe après la première connexion.');
 
         return 0;
     }

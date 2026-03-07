@@ -45,4 +45,13 @@ class SettingsController extends Controller
 
         return redirect()->route('settings.edit')->with('status', 'Paramètres mis à jour');
     }
+
+    public function destroy()
+{
+    $user = Auth::user();
+    Auth::logout();
+    $user->delete();
+    return redirect()->route('login')->with('status', 'Votre compte a été supprimé.');
+}
+
 }

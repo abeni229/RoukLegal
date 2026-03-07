@@ -1,77 +1,129 @@
 @extends('layouts.app')
-@section('title', 'Conversation avec ' . $user->nom)
+
+@section('title', 'Conversation avec ' . $user->nom . ' — RoukLegal')
+
+@section('page-title')
+  Messagerie <span>/ {{ $user->nom }}</span>
+@endsection
+
+@section('topbar-actions')
+  <a href="{{ route('messages.index') }}" class="rl-btn-outline">
+    <i class="fas fa-arrow-left"></i> Conversations
+  </a>
+@endsection
+
 @section('content')
-<div class="row mb-4">
-    <div class="col-12 d-flex justify-content-between align-items-center">
-        <h2 class="fw-bold">Conversation avec {{ $user->nom }}</h2>
-        @php
-            $home = Auth::user() && Auth::user()->role === 'acteur_juridique' ? route('acteur.dashboard') : route('client.dashboard');
-        @endphp
-        <a href="{{ $home }}" class="btn btn-secondary btn-sm">
-            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
-        </a>
-    </div>
-    <div class="col-12">
-        <p class="text-muted">Échange privé sur la plateforme</p>
-    </div>
-</div>
+@php
+  $avatar = $user->photo_professionnelle
+    ? asset('storage/'.$user->photo_professionnelle)
+    : ($user->profile_photo ? asset('storage/'.$user->profile_photo) : null);
+  $meAvatar = Auth::user()->profile_photo
+    ? asset('storage/'.Auth::user()->profile_photo)
+    : (Auth::user()->photo_professionnelle ? asset('storage/'.Auth::user()->photo_professionnelle) : null);
+  $role = $user->role === 'acteur_juridique' ? ($user->profession?->nom ?? 'Professionnel juridique') : 'Client';
+@endphp
 
-<div class="card">
-    <div class="card-body" style="max-height: 60vh; overflow-y: auto;">
-        @foreach($messages as $msg)
-            @php
-                $isMe = $msg->sender_id === Auth::id();
-                if($msg->sender->profile_photo) {
-                    $avatar = asset('storage/'.$msg->sender->profile_photo);
-                } elseif($msg->sender->photo_professionnelle) {
-                    $avatar = asset('storage/'.$msg->sender->photo_professionnelle);
-                } else {
-                    $avatar = 'https://via.placeholder.com/40';
-                }
-            @endphp
-            <div class="d-flex mb-3 {{ $isMe ? 'justify-content-end' : 'justify-content-start' }}">
-                @if(!$isMe)
-                    <img src="{{ $avatar }}" class="rounded-circle me-2" style="width:40px; height:40px; object-fit:cover;">
-                @endif
-                <div class="bubble {{ $isMe ? 'bubble-right bg-primary text-white' : 'bubble-left bg-light' }}">
-                    {{ $msg->message }}
-                    <div class="text-end mt-1" style="font-size:0.75rem; opacity:0.6;">
-                        {{ $msg->created_at->format('H:i') }}
-                    </div>
-                </div>
-                @if($isMe)
-                    @php
-                        $meAvatar = Auth::user()->profile_photo ? asset('storage/'.Auth::user()->profile_photo) : (Auth::user()->photo_professionnelle ? asset('storage/'.Auth::user()->photo_professionnelle) : 'https://via.placeholder.com/40');
-                    @endphp
-                    <img src="{{ $meAvatar }}" class="rounded-circle ms-2" style="width:40px; height:40px; object-fit:cover;">
-                @endif
-            </div>
-        @endforeach
-    </div>
-</div>
-<style>
-    .bubble {
-        max-width: 70%;
-        padding: 0.75rem 1rem;
-        border-radius: 1rem;
-        position: relative;
-    }
-    .bubble-left {
-        border-top-left-radius: 0;
-    }
-    .bubble-right {
-        border-top-right-radius: 0;
-    }
-</style>
+<div style="max-width:820px;display:flex;flex-direction:column;gap:0;">
 
-<form method="POST" action="{{ route('messages.send', ['user' => $user->id]) }}" class="mt-3">
+  {{-- EN-TÊTE CONVERSATION --}}
+  <div style="display:flex;align-items:center;gap:16px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;border-bottom:none;">
+    <div style="width:46px;height:46px;border-radius:50%;background:var(--gold-dim);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+      @if($avatar)
+        <img src="{{ $avatar }}" style="width:100%;height:100%;object-fit:cover;"/>
+      @else
+        <span style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:var(--gold);">{{ strtoupper(substr($user->nom,0,2)) }}</span>
+      @endif
+    </div>
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:var(--ink);">{{ $user->nom }}</div>
+      <div style="font-size:.72rem;color:var(--txt-muted);">{{ $role }}</div>
+    </div>
+    <div style="margin-left:auto;">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;"></div>
+      <span style="font-size:.72rem;color:var(--txt-muted);">En ligne</span>
+    </div>
+  </div>
+
+  {{-- ZONE MESSAGES --}}
+  <div id="messagesContainer"
+       style="min-height:400px;max-height:58vh;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-top:1px solid var(--border);padding:20px;display:flex;flex-direction:column;gap:12px;">
+
+    @forelse($messages as $msg)
+    @php $isMe = $msg->sender_id === Auth::id(); @endphp
+
+    <div style="display:flex;align-items:flex-end;gap:10px;{{ $isMe ? 'flex-direction:row-reverse;' : '' }}">
+
+      {{-- Avatar --}}
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--gold-dim);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+        @if($isMe)
+          @if($meAvatar)
+            <img src="{{ $meAvatar }}" style="width:100%;height:100%;object-fit:cover;"/>
+          @else
+            <span style="font-size:.65rem;font-weight:700;color:var(--gold);">{{ strtoupper(substr(Auth::user()->nom,0,2)) }}</span>
+          @endif
+        @else
+          @if($avatar)
+            <img src="{{ $avatar }}" style="width:100%;height:100%;object-fit:cover;"/>
+          @else
+            <span style="font-size:.65rem;font-weight:700;color:var(--gold);">{{ strtoupper(substr($user->nom,0,2)) }}</span>
+          @endif
+        @endif
+      </div>
+
+      {{-- Bulle --}}
+      <div style="max-width:65%;padding:10px 14px;border-radius:{{ $isMe ? '16px 4px 16px 16px' : '4px 16px 16px 16px' }};font-size:.88rem;line-height:1.6;word-wrap:break-word;
+        {{ $isMe
+          ? 'background:var(--gold);color:#111820;'
+          : 'background:var(--surface);border:1px solid var(--border);color:var(--txt);' }}">
+        {{ $msg->message }}
+        <div style="font-size:.65rem;opacity:.6;margin-top:5px;text-align:{{ $isMe ? 'left' : 'right' }};">
+          {{ $msg->created_at->format('H:i') }}
+        </div>
+      </div>
+
+    </div>
+
+    @empty
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 0;color:var(--txt-muted);">
+      <div style="font-size:2.5rem;margin-bottom:12px;">💬</div>
+      <div style="font-size:.88rem;">Démarrez la conversation avec {{ $user->nom }}</div>
+    </div>
+    @endforelse
+  </div>
+
+  {{-- FORMULAIRE ENVOI --}}
+  <form method="POST" action="{{ route('messages.send', ['user'=>$user->id]) }}"
+        style="display:flex;gap:0;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);overflow:hidden;background:var(--surface);">
     @csrf
-    <div class="input-group">
-        <textarea name="message" class="form-control" rows="2" placeholder="Écrire un message..."></textarea>
-        <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i> Envoyer</button>
-    </div>
-    @error('message')
-        <div class="text-danger mt-1">{{ $message }}</div>
-    @enderror
-</form>
+    <textarea name="message" id="msgInput" rows="1"
+              style="flex:1;padding:14px 18px;background:transparent;border:none;outline:none;resize:none;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--txt);line-height:1.5;max-height:120px;"
+              placeholder="Écrire un message…"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.closest('form').submit();}"></textarea>
+    <button type="submit"
+            style="padding:14px 22px;background:var(--gold);border:none;cursor:pointer;color:#111820;font-size:1rem;transition:background .15s;flex-shrink:0;"
+            onmouseover="this.style.background='var(--gold-lt)'"
+            onmouseout="this.style.background='var(--gold)'">
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </form>
+  @error('message')
+  <div style="font-size:.75rem;color:var(--red);margin-top:6px;">{{ $message }}</div>
+  @enderror
+
+</div>
+@endsection
+
+@section('scripts')
+<script>
+  // Auto-scroll bas
+  const mc = document.getElementById('messagesContainer');
+  if(mc) mc.scrollTop = mc.scrollHeight;
+
+  // Auto-resize textarea
+  const ta = document.getElementById('msgInput');
+  ta?.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+</script>
 @endsection

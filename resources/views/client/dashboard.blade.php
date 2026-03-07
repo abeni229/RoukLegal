@@ -1,88 +1,143 @@
 @extends('layouts.app')
-@section('title', 'Dashboard - Client')
-@section('content')
-<div class="row mb-4">
-    <div class="col-12 d-flex align-items-center">
-        @if(Auth::user()->profile_photo)
-            <img src="{{ asset('storage/'.Auth::user()->profile_photo) }}" alt="Profil" class="rounded-circle me-3" style="width:60px;height:60px;object-fit:cover;">
-        @endif
-        <div>
-            <h1 style="color: var(--dark); font-weight: 700; margin-bottom: 0.5rem;">Bienvenue, {{ Auth::user()->nom }}</h1>
-            <p style="color: #6b7280; margin: 0;">Gérez vos questions, consultations et paiements</p>
-        </div>
-    </div>
-</div>
 
-<div class="row g-4">
-    <div class="col-md-6 col-lg-4">
-        <div class="stat-card primary">
-            <i class="fas fa-question-circle" style="font-size: 2rem; opacity: 0.8;"></i>
-            <div class="stat-number">{{ $questionsCount ?? 0 }}</div>
-            <div class="stat-label">Questions posées</div>
-        </div>
-    </div>
-    <div class="col-md-6 col-lg-4">
-        <div class="stat-card success">
-            <i class="fas fa-credit-card" style="font-size: 2rem; opacity: 0.8;"></i>
-            <div class="stat-number">{{ $paymentsCount ?? 0 }}</div>
-            <div class="stat-label">Paiements</div>
-        </div>
-    </div>
-    <div class="col-md-6 col-lg-4">
-        <div class="stat-card warning">
-            <i class="fas fa-newspaper" style="font-size: 2rem; opacity: 0.8;"></i>
-            <div class="stat-number">0</div>
-            <div class="stat-label">Articles lus</div>
-        </div>
-    </div>
-</div>
+@section('title', 'Mon Espace — RoukLegal')
 
-<div class="row g-4 mt-2">
-    <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5 class="card-title" style="font-weight: 700; color: var(--dark); margin-bottom: 1rem;">
-                    <i class="fas fa-list"></i> Vos questions récentes
-                </h5>
-                <p style="color: #6b7280; margin-bottom: 1.5rem;">Accédez à vos questions et suivez les réponses</p>
-                <a href="{{ route('client.questions') }}" class="btn btn-primary">
-                    <i class="fas fa-arrow-right"></i> Voir toutes
-                </a>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5 class="card-title" style="font-weight: 700; color: var(--dark); margin-bottom: 1rem;">
-                    <i class="fas fa-newspaper"></i> Articles Juridiques
-                </h5>
-                <p style="color: #6b7280; margin-bottom: 1.5rem;">Consultez les articles de nos experts</p>
-                <a href="{{ route('client.articles') }}" class="btn btn-primary">
-                    <i class="fas fa-book-open"></i> Lire les articles
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4 mt-2">
-    <div class="col-lg-12">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title" style="font-weight: 700; color: var(--dark); margin-bottom: 1rem;">
-                    <i class="fas fa-plus-circle"></i> Poser une question
-                </h5>
-                <p style="color: #6b7280; margin-bottom: 1.5rem;">Contactez directement nos experts juridiques</p>
-                <a href="#new-question" class="btn btn-success btn-lg">
-                    <i class="fas fa-question-circle"></i> Nouvelle question
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+@section('page-title')
+  Mon Espace <span>/ Dashboard</span>
 @endsection
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+@section('topbar-actions')
+  <a href="{{ route('articles.index') }}" class="rl-btn">
+    <i class="fas fa-plus"></i> Poser une question
+  </a>
+@endsection
+
+@section('content')
+@php
+  $subType  = $subscriptionType ?? 'none';
+  $icons    = ['trial'=>'⏳','active'=>'✅','expired'=>'⚠️','none'=>'🔓'];
+@endphp
+<div style="display:flex;flex-direction:column;gap:28px;">
+
+  {{-- BANNIÈRE ABONNEMENT --}}
+  @php
+    $bannerBg = [
+      'trial'  =>'var(--orange-dim)','active'=>'var(--green-dim)',
+      'expired'=>'var(--red-dim)',   'none'  =>'var(--blue-dim)'
+    ];
+    $bannerBorder = [
+      'trial'  =>'rgba(230,126,34,.25)','active'=>'rgba(39,174,96,.25)',
+      'expired'=>'rgba(231,76,60,.25)', 'none'  =>'rgba(41,128,185,.25)'
+    ];
+    $titleColor = [
+      'trial'=>'var(--orange)','active'=>'var(--green)',
+      'expired'=>'var(--red)', 'none'=>'var(--blue)'
+    ];
+  @endphp
+  <div class="fade-up" style="background:{{ $bannerBg[$subType] }};border:1px solid {{ $bannerBorder[$subType] }};border-radius:var(--radius);padding:22px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;">
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="font-size:1.8rem;">{{ $icons[$subType] }}</div>
+      <div>
+        <div style="font-weight:600;font-size:.95rem;color:{{ $titleColor[$subType] }};">{{ $subscriptionLabel }}</div>
+        <div style="font-size:.8rem;color:var(--txt-muted);margin-top:2px;">
+          @if($subType==='trial') Votre essai expire le {{ \Carbon\Carbon::parse($subscriptionExpiry)->format('d/m/Y') }}
+          @elseif($subType==='active') Abonnement valide jusqu'au {{ \Carbon\Carbon::parse($subscriptionExpiry)->format('d/m/Y') }}
+          @elseif($subType==='expired') Votre accès a expiré — renouvelez pour continuer
+          @else Activez votre essai gratuit pour accéder à toutes les fonctionnalités
+          @endif
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      @if(in_array($subType,['trial','active']))
+        <div style="text-align:center;">
+          <div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:{{ $titleColor[$subType] }};line-height:1;">{{ $subscriptionDaysLeft }}</div>
+          <div style="font-size:.7rem;color:var(--txt-muted);">jours restants</div>
+        </div>
+        <a href="{{ route('settings.edit') }}" class="rl-btn-outline">Gérer</a>
+      @else
+        <a href="#" class="rl-btn" onclick="event.preventDefault();fetch('{{ route('client.startTrial') }}',{method:'POST',headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'}}).then(()=>location.reload())">
+          {{ $subType==='none' ? 'Démarrer l\'essai gratuit' : 'Renouveler' }}
+        </a>
+      @endif
+    </div>
+  </div>
+
+  {{-- STATS --}}
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+    <div class="rl-stat-card fade-up" style="--accent:var(--gold);animation-delay:.1s">
+      <div class="rl-stat-header"><span class="rl-stat-label">Questions posées</span><span>❓</span></div>
+      <div class="rl-stat-value">{{ $questionsCount }}</div>
+      <div class="rl-stat-sub">Depuis l'inscription</div>
+    </div>
+    <div class="rl-stat-card fade-up" style="--accent:var(--blue);animation-delay:.15s">
+      <div class="rl-stat-header"><span class="rl-stat-label">Réponses reçues</span><span>💬</span></div>
+      <div class="rl-stat-value">{{ $recentQuestions->sum(fn($q)=>$q->reponses->count()) }}</div>
+      <div class="rl-stat-sub">Sur vos questions récentes</div>
+    </div>
+    <div class="rl-stat-card fade-up" style="--accent:var(--green);animation-delay:.2s">
+      <div class="rl-stat-header"><span class="rl-stat-label">Paiements</span><span>💳</span></div>
+      <div class="rl-stat-value">{{ $paymentsCount }}</div>
+      <div class="rl-stat-sub">Transactions effectuées</div>
+    </div>
+  </div>
+
+  {{-- BOTTOM GRID --}}
+  <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:24px;">
+
+    {{-- Questions récentes --}}
+    <div class="rl-card fade-up" style="animation-delay:.25s">
+      <div class="rl-card-header">
+        <span class="rl-card-title">Questions récentes</span>
+        <a href="{{ route('client.questions') }}" class="rl-card-link">Voir tout →</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        @forelse($recentQuestions as $q)
+        <div style="padding:14px 16px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid {{ $q->reponses->count()>0 ? 'var(--green)' : 'var(--orange)' }};display:flex;align-items:flex-start;gap:14px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $q->titre }}</div>
+            <div style="display:flex;gap:10px;margin-top:5px;">
+              <span style="font-size:.72rem;color:var(--txt-muted);">{{ $q->created_at->format('d/m/Y') }}</span>
+              @if($q->reponses->count()>0)
+                <span style="font-size:.72rem;color:var(--green);font-weight:600;">{{ $q->reponses->count() }} réponse(s)</span>
+              @else
+                <span style="font-size:.72rem;color:var(--orange);">En attente</span>
+              @endif
+            </div>
+          </div>
+        </div>
+        @empty
+        <div style="text-align:center;padding:32px;color:var(--txt-muted);">
+          <div style="font-size:2rem;margin-bottom:8px;">💬</div>
+          Aucune question posée pour l'instant.<br>
+          <a href="{{ route('articles.index') }}" style="color:var(--gold);font-weight:600;font-size:.82rem;">Parcourir les articles →</a>
+        </div>
+        @endforelse
+      </div>
+    </div>
+
+    {{-- Actions rapides --}}
+    <div class="rl-card fade-up" style="animation-delay:.3s">
+      <div class="rl-card-header"><span class="rl-card-title">Actions rapides</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        @foreach([
+          ['route'=>'client.acteurs','icon'=>'⚖️','title'=>'Trouver un acteur','desc'=>'Avocats, notaires, huissiers…'],
+          ['route'=>'client.questions','icon'=>'📋','title'=>'Mes questions','desc'=>'Historique & réponses'],
+          ['route'=>'messages.index','icon'=>'💬','title'=>'Messagerie','desc'=>'Discussions privées'],
+          ['route'=>'client.articles','icon'=>'📰','title'=>'Lire les articles','desc'=>'Actualités juridiques'],
+        ] as $action)
+        <a href="{{ route($action['route']) }}" style="display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);text-decoration:none;transition:background .18s,border-color .18s,transform .15s;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='var(--gold)';this.style.transform='translateX(4px)'" onmouseout="this.style.background='var(--surface2)';this.style.borderColor='var(--border)';this.style.transform='none'">
+          <div style="width:38px;height:38px;border-radius:9px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">{{ $action['icon'] }}</div>
+          <div>
+            <div style="font-size:.88rem;font-weight:600;color:var(--txt);">{{ $action['title'] }}</div>
+            <div style="font-size:.75rem;color:var(--txt-muted);margin-top:2px;">{{ $action['desc'] }}</div>
+          </div>
+          <span style="margin-left:auto;color:var(--txt-muted);">›</span>
+        </a>
+        @endforeach
+      </div>
+    </div>
+
+  </div>
+</div>
+@endsection
