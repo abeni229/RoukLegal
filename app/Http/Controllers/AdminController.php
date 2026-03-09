@@ -101,4 +101,43 @@ class AdminController extends Controller
             'paymentsByMethod' => $paymentsByMethod,
         ];
     }
+
+    public function utilisateurs()
+{
+    $clients = User::where('role', 'client')
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+
+    $acteurs = User::where('role', 'acteur_juridique')
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+
+    $essaisActifs = User::where('role', 'client')
+        ->whereNotNull('trial_end')
+        ->where('trial_end', '>=', now())
+        ->get();
+
+    return view('admin.utilisateurs', compact('clients', 'acteurs', 'essaisActifs'));
+}
+
+public function paiements()
+{
+    $paiements = \App\Models\Paiement::with(['user', 'acteurJuridique'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+
+    return view('admin.paiements', compact('paiements'));
+}
+
+public function commissions()
+{
+    $rdvs = \App\Models\RendezVous::with(['client', 'acteur'])
+        ->whereIn('statut_paiement', ['confirme_acteur', 'confirmé_acteur'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+
+    $totalAdmin = $rdvs->sum('commission_admin');
+
+    return view('admin.commissions', compact('rdvs', 'totalAdmin'));
+}
 }

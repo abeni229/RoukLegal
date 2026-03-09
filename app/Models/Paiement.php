@@ -2,20 +2,29 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Paiement extends Model
 {
-    use HasFactory;
+    protected $table = 'paiements';
 
     protected $fillable = [
-        'user_id', 'acteurjuridique_id', 'question_id', 'montant', 'methode', 'statut', 'date_paiement'
+        'user_id',
+        'acteurjuridique_id',
+        'question_id',
+        'montant',
+        'methode',
+        'statut',
+        'date_paiement',
     ];
 
-    public function user()
+    protected $casts = [
+        'date_paiement' => 'datetime',
+    ];
+
+    public function client()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function acteur()

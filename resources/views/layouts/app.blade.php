@@ -438,69 +438,146 @@
   {{-- Navigation --}}
   <div class="rl-sidebar-section">Menu</div>
   <nav>
+
+    {{-- ══════════════ CLIENT ══════════════ --}}
     @if(Auth::user()->role === 'client')
-      <a class="rl-nav-item {{ request()->routeIs('client.dashboard') ? 'active' : '' }}" href="{{ route('client.dashboard') }}">
+      <a class="rl-nav-item {{ request()->routeIs('client.dashboard') ? 'active' : '' }}"
+         href="{{ route('client.dashboard') }}">
         <i class="fas fa-home"></i> Tableau de bord
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('client.acteurs','client.acteur.show') ? 'active' : '' }}" href="{{ route('client.acteurs') }}">
+      <a class="rl-nav-item {{ request()->routeIs('client.acteurs','client.acteur.show') ? 'active' : '' }}"
+         href="{{ route('client.acteurs') }}">
         <i class="fas fa-balance-scale"></i> Acteurs juridiques
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('client.articles') ? 'active' : '' }}" href="{{ route('client.articles') }}">
+      <a class="rl-nav-item {{ request()->routeIs('client.articles') ? 'active' : '' }}"
+         href="{{ route('client.articles') }}">
         <i class="fas fa-newspaper"></i> Articles
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('client.questions') ? 'active' : '' }}" href="{{ route('client.questions') }}">
+      <a class="rl-nav-item {{ request()->routeIs('client.questions') ? 'active' : '' }}"
+         href="{{ route('client.questions') }}">
         <i class="fas fa-question-circle"></i> Mes questions
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('messages.*') ? 'active' : '' }}" href="{{ route('messages.index') }}">
+      {{-- Rendez-vous client --}}
+      <a class="rl-nav-item {{ request()->routeIs('client.rendezVous','client.reserver') ? 'active' : '' }}"
+         href="{{ route('client.rendezVous') }}">
+        <i class="fas fa-calendar-check"></i> Mes rendez-vous
+        @php
+          $rdvClientAttente = \App\Models\RendezVous::where('user_id', Auth::id())
+            ->whereIn('statut_paiement', ['payé','validé_admin'])->count();
+        @endphp
+        @if($rdvClientAttente > 0)
+          <span class="rl-nav-badge gold">{{ $rdvClientAttente }}</span>
+        @endif
+      </a>
+      <a class="rl-nav-item {{ request()->routeIs('messages.*') ? 'active' : '' }}"
+         href="{{ route('messages.index') }}">
         <i class="fas fa-comments"></i> Messagerie
       </a>
       <div class="rl-sidebar-section">Compte</div>
-      <a class="rl-nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.edit') }}">
+      <a class="rl-nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}"
+         href="{{ route('settings.edit') }}">
         <i class="fas fa-cog"></i> Paramètres
       </a>
 
+    {{-- ══════════════ ACTEUR JURIDIQUE ══════════════ --}}
     @elseif(Auth::user()->role === 'acteur_juridique')
-      <a class="rl-nav-item {{ request()->routeIs('acteur.dashboard') ? 'active' : '' }}" href="{{ route('acteur.dashboard') }}">
+      <a class="rl-nav-item {{ request()->routeIs('acteur.dashboard') ? 'active' : '' }}"
+         href="{{ route('acteur.dashboard') }}">
         <i class="fas fa-home"></i> Tableau de bord
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('acteur.questions') ? 'active' : '' }}" href="{{ route('acteur.questions') }}">
+      <a class="rl-nav-item {{ request()->routeIs('acteur.questions') ? 'active' : '' }}"
+         href="{{ route('acteur.questions') }}">
         <i class="fas fa-question-circle"></i> Questions reçues
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('articles.dashboard') ? 'active' : '' }}" href="{{ route('articles.dashboard') }}">
+      <a class="rl-nav-item {{ request()->routeIs('articles.dashboard') ? 'active' : '' }}"
+         href="{{ route('articles.dashboard') }}">
         <i class="fas fa-newspaper"></i> Mes articles
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('articles.create') ? 'active' : '' }}" href="{{ route('articles.create') }}">
+      <a class="rl-nav-item {{ request()->routeIs('articles.create') ? 'active' : '' }}"
+         href="{{ route('articles.create') }}">
         <i class="fas fa-pen"></i> Nouvel article
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('messages.*') ? 'active' : '' }}" href="{{ route('messages.index') }}">
+
+      {{-- Rendez-vous acteur --}}
+      <div style="height:1px;background:rgba(255,255,255,.06);margin:8px 14px;"></div>
+      <div class="rl-sidebar-section" style="padding-top:12px;">Rendez-vous</div>
+      <a class="rl-nav-item {{ request()->routeIs('acteur.creneaux*') ? 'active' : '' }}"
+         href="{{ route('acteur.creneaux') }}">
+        <i class="fas fa-clock"></i> Mes créneaux
+        @php
+          $creneauxActifs = \App\Models\Creneau::where('acteurjuridique_id', Auth::id())->where('actif', true)->count();
+        @endphp
+        @if($creneauxActifs === 0)
+          <span class="rl-nav-badge" style="background:var(--orange);">!</span>
+        @endif
+      </a>
+      <a class="rl-nav-item {{ request()->routeIs('acteur.rendezVous') ? 'active' : '' }}"
+         href="{{ route('acteur.rendezVous') }}">
+        <i class="fas fa-calendar-check"></i> Rendez-vous reçus
+        @php
+          $rdvActeurAttente = \App\Models\RendezVous::where('acteurjuridique_id', Auth::id())
+            ->where('statut_paiement', 'validé_admin')->count();
+        @endphp
+        @if($rdvActeurAttente > 0)
+          <span class="rl-nav-badge">{{ $rdvActeurAttente }}</span>
+        @endif
+      </a>
+
+      <div style="height:1px;background:rgba(255,255,255,.06);margin:8px 14px;"></div>
+      <a class="rl-nav-item {{ request()->routeIs('messages.*') ? 'active' : '' }}"
+         href="{{ route('messages.index') }}">
         <i class="fas fa-comments"></i> Messagerie
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('acteur.profile') ? 'active' : '' }}" href="{{ route('acteur.profile') }}">
+      <a class="rl-nav-item {{ request()->routeIs('acteur.profile') ? 'active' : '' }}"
+         href="{{ route('acteur.profile') }}">
         <i class="fas fa-id-card"></i> Mon profil
       </a>
       <div class="rl-sidebar-section">Compte</div>
-      <a class="rl-nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.edit') }}">
+      <a class="rl-nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}"
+         href="{{ route('settings.edit') }}">
         <i class="fas fa-cog"></i> Paramètres
       </a>
 
+    {{-- ══════════════ ADMIN ══════════════ --}}
     @elseif(Auth::user()->role === 'admin')
-      <a class="rl-nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+      <a class="rl-nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
+         href="{{ route('admin.dashboard') }}">
         <i class="fas fa-chart-line"></i> Tableau de bord
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('admin.users') ? 'active' : '' }}" href="#">
+      <a class="rl-nav-item {{ request()->routeIs('admin.users') ? 'active' : '' }}"
+         href="#">
         <i class="fas fa-users"></i> Utilisateurs
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('admin.paiements') ? 'active' : '' }}" href="#">
+      <a class="rl-nav-item {{ request()->routeIs('admin.paiements') ? 'active' : '' }}"
+         href="#">
         <i class="fas fa-credit-card"></i> Paiements
       </a>
-      <a class="rl-nav-item {{ request()->routeIs('admin.commissions') ? 'active' : '' }}" href="#">
+      <a class="rl-nav-item {{ request()->routeIs('admin.commissions') ? 'active' : '' }}"
+         href="#">
         <i class="fas fa-percentage"></i> Commissions
       </a>
+
+      {{-- Rendez-vous admin --}}
+      <div style="height:1px;background:rgba(255,255,255,.06);margin:8px 14px;"></div>
+      <div class="rl-sidebar-section" style="padding-top:12px;">Rendez-vous</div>
+      <a class="rl-nav-item {{ request()->routeIs('admin.rendezVous') ? 'active' : '' }}"
+         href="{{ route('admin.rendezVous') }}">
+        <i class="fas fa-calendar-alt"></i> Rendez-vous
+        @php
+          $rdvAdminAttente = \App\Models\RendezVous::where('statut_paiement', 'payé')->count();
+        @endphp
+        @if($rdvAdminAttente > 0)
+          <span class="rl-nav-badge">{{ $rdvAdminAttente }}</span>
+        @endif
+      </a>
+
       <div class="rl-sidebar-section">Compte</div>
-      <a class="rl-nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.edit') }}">
+      <a class="rl-nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}"
+         href="{{ route('settings.edit') }}">
         <i class="fas fa-cog"></i> Paramètres
       </a>
     @endif
+
   </nav>
 
   {{-- Footer --}}

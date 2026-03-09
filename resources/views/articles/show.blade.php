@@ -166,11 +166,12 @@
         {{ Str::limit($article->user->description, 150) }}
       </div>
       @endif
-      @if(Auth::check() && Auth::user()->role === 'client')
-      <a href="{{ route('messages.conversation', $article->user->id) }}" class="rl-btn" style="width:100%;justify-content:center;margin-top:8px;">
-        <i class="fas fa-comments"></i> Contacter
-      </a>
-      @endif
+        @if(Auth::check() && Auth::user()->role === 'client')
+    <a href="{{ route('client.reserver', $article->user->id) }}" 
+      class="rl-btn" style="width:100%;justify-content:center;margin-top:8px;">
+      <i class="fas fa-calendar-plus"></i> Prendre rendez-vous
+    </a>
+    @endif
     </div>
 
     {{-- Articles connexes --}}

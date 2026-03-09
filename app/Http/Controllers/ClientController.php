@@ -97,6 +97,63 @@ class ClientController extends Controller
         ]);
     }
 
+    /**
+     * Affiche les questions du client.
+     */
+    public function questions()
+    {
+        $user = Auth::user();
+
+        $questions = $user->questions()
+            ->with(['reponses.acteur',  'article'])
+            ->latest()
+            ->paginate(10);
+
+        return view('client.questions', [
+            'questions'   => $questions,
+            'withSidebar' => true,
+        ]);
+    }
+
+    /**
+     * Affiche les rendez-vous du client.
+     */
+    public function rendezVous()
+    {
+        $user = Auth::user();
+
+        $rdvs = $user->rendezVous()
+            ->with(['acteurJuridique', 'paiementRdv'])
+            ->latest('date_heure')
+            ->paginate(10);
+
+        return view('client.rendez-vous', [
+            'rdvs'        => $rdvs,
+            'withSidebar' => true,
+        ]);
+    }
+
+    /**
+     * Affiche le formulaire de réservation pour un acteur donné.
+     */
+    public function reserver(User $acteur)
+    {
+        if ($acteur->role !== 'acteur_juridique') {
+            abort(404);
+        }
+
+        $creneaux = $acteur->creneaux()
+            ->where('actif', true)
+            ->get()
+            ->groupBy('jour_semaine');
+
+        return view('client.reserver', [
+            'acteur'      => $acteur,
+            'creneaux'    => $creneaux,
+            'withSidebar' => true,
+        ]);
+    }
+
     // -----------------------------------------------------------------------
     //  Méthodes privées
     // -----------------------------------------------------------------------
@@ -114,49 +171,44 @@ class ClientController extends Controller
 
     /**
      * Statut d'abonnement / essai gratuit du client.
-     * Retourne : type (trial | active | expired | none), jours restants, date fin
      */
     private function getSubscriptionStatus(User $user): array
     {
         $now = now();
 
-        // Essai gratuit actif
         if ($user->trial_end && $user->trial_end >= $now) {
             return [
-                'subscriptionType'    => 'trial',
-                'subscriptionLabel'   => 'Essai gratuit',
-                'subscriptionExpiry'  => $user->trial_end,
-                'subscriptionDaysLeft'=> (int) $now->diffInDays($user->trial_end),
+                'subscriptionType'     => 'trial',
+                'subscriptionLabel'    => 'Essai gratuit',
+                'subscriptionExpiry'   => $user->trial_end,
+                'subscriptionDaysLeft' => (int) $now->diffInDays($user->trial_end),
             ];
         }
 
-        // Abonnement payant actif
         $lastPaiement = $user->paiements()->latest('date_paiement')->first();
         if ($lastPaiement && isset($lastPaiement->expiry_date) && $lastPaiement->expiry_date >= $now) {
             return [
-                'subscriptionType'    => 'active',
-                'subscriptionLabel'   => 'Abonnement actif',
-                'subscriptionExpiry'  => $lastPaiement->expiry_date,
-                'subscriptionDaysLeft'=> (int) $now->diffInDays($lastPaiement->expiry_date),
+                'subscriptionType'     => 'active',
+                'subscriptionLabel'    => 'Abonnement actif',
+                'subscriptionExpiry'   => $lastPaiement->expiry_date,
+                'subscriptionDaysLeft' => (int) $now->diffInDays($lastPaiement->expiry_date),
             ];
         }
 
-        // Essai expiré
         if ($user->trial_end && $user->trial_end < $now) {
             return [
-                'subscriptionType'    => 'expired',
-                'subscriptionLabel'   => 'Essai expiré',
-                'subscriptionExpiry'  => $user->trial_end,
-                'subscriptionDaysLeft'=> 0,
+                'subscriptionType'     => 'expired',
+                'subscriptionLabel'    => 'Essai expiré',
+                'subscriptionExpiry'   => $user->trial_end,
+                'subscriptionDaysLeft' => 0,
             ];
         }
 
-        // Aucun accès
         return [
-            'subscriptionType'    => 'none',
-            'subscriptionLabel'   => 'Aucun abonnement',
-            'subscriptionExpiry'  => null,
-            'subscriptionDaysLeft'=> 0,
+            'subscriptionType'     => 'none',
+            'subscriptionLabel'    => 'Aucun abonnement',
+            'subscriptionExpiry'   => null,
+            'subscriptionDaysLeft' => 0,
         ];
     }
 

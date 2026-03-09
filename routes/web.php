@@ -7,6 +7,8 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ActeurController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\CreneauController;
+use App\Http\Controllers\RendezVousController;
 
 // Homepage - Show landing page or redirect to dashboard
 Route::get('/', function () {
@@ -97,4 +99,44 @@ Route::middleware('auth')->group(function () {
          ->name('messages.conversation');
     Route::post('/messages/{user}', [\App\Http\Controllers\MessageController::class, 'send'])
          ->name('messages.send');
+});
+
+//  CRÉNEAUX (acteur) 
+Route::prefix('acteur')->middleware('auth')->group(function () {
+    Route::get('/creneaux',                        [CreneauController::class, 'index'])->name('acteur.creneaux');
+    Route::post('/creneaux',                       [CreneauController::class, 'store'])->name('acteur.creneaux.store');
+    Route::patch('/creneaux/{creneau}/toggle',     [CreneauController::class, 'toggle'])->name('acteur.creneaux.toggle');
+    Route::delete('/creneaux/{creneau}',           [CreneauController::class, 'destroy'])->name('acteur.creneaux.destroy');
+    Route::get('/rendez-vous',                     [RendezVousController::class, 'acteurIndex'])->name('acteur.rendezVous');
+    Route::post('/rendez-vous/{rdv}/confirmer',    [RendezVousController::class, 'confirmer'])->name('acteur.rdv.confirmer');
+    Route::post('/rendez-vous/{rdv}/refuser',      [RendezVousController::class, 'refuser'])->name('acteur.rdv.refuser');
+});
+
+// CRÉNEAUX PUBLICS (pour le client, pas besoin d'être acteur)
+Route::get('/acteur/{acteur}/creneaux-disponibles', [CreneauController::class, 'disponibles'])
+    ->middleware('auth')
+    ->name('acteur.creneaux.disponibles');
+
+//RENDEZ-VOUS (client) 
+Route::prefix('client')->middleware('auth')->group(function () {
+    Route::get('/rendez-vous',                     [RendezVousController::class, 'clientIndex'])->name('client.rendezVous');
+    Route::get('/reserver/{acteur}',               [RendezVousController::class, 'reserver'])->name('client.reserver');
+    Route::post('/reserver/{acteur}',              [RendezVousController::class, 'initierPaiement'])->name('client.reserver.payer');
+});
+
+//  RENDEZ-VOUS (admin) 
+Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::get('/rendez-vous',                     [RendezVousController::class, 'adminIndex'])->name('admin.rendezVous');
+    Route::post('/rendez-vous/{rdv}/valider',      [RendezVousController::class, 'validerAdmin'])->name('admin.rdv.valider');
+    Route::post('/rendez-vous/{rdv}/rembourser',   [RendezVousController::class, 'rembourserAdmin'])->name('admin.rdv.rembourser');
+});
+
+Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::get('/dashboard',     [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/utilisateurs',  [AdminController::class, 'utilisateurs'])->name('admin.users');
+    Route::get('/paiements',     [AdminController::class, 'paiements'])->name('admin.paiements');
+    Route::get('/commissions',   [AdminController::class, 'commissions'])->name('admin.commissions');
+    Route::get('/rendez-vous',   [RendezVousController::class, 'adminIndex'])->name('admin.rendezVous');
+    Route::post('/rendez-vous/{rdv}/valider',    [RendezVousController::class, 'validerAdmin'])->name('admin.rdv.valider');
+    Route::post('/rendez-vous/{rdv}/rembourser', [RendezVousController::class, 'rembourserAdmin'])->name('admin.rdv.rembourser');
 });

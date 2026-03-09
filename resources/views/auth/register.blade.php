@@ -1,392 +1,269 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inscription — RoukLegal</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    :root {
-      --gold:    #c9a84c;
-      --gold-lt: #e2c47a;
-      --gold-dim:rgba(201,168,76,.09);
-      --ink:     #f5f0e8;
-      --ink-dim: rgba(245,240,232,.55);
-      --bg:      #0c1117;
-      --bg2:     #111820;
-      --bg3:     #161f2a;
-      --border:  rgba(201,168,76,.18);
-      --red:     #e74c3c;
-      --green:   #27ae60;
-      --radius:  12px;
-    }
-    html, body { height:100%; font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Inscription — RoukLegal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:     #c2601a;
+  --gold-lt:  #d97c38;
+  --gold-dim: rgba(194,96,26,.09);
+  --ink:      #1c2434;
+  --ink-dim:  rgba(28,36,52,.58);
+  --bg:       #f5f0e8;
+  --bg2:      #ede8df;
+  --bg3:      #e6dfd4;
+  --border:   rgba(28,36,52,.12);
+  --navy:     #1a2e4a;
+  --red:      #c0392b;
+  --green:    #1e7e50;
+  --orange:   #d97c38;
+  --radius:   12px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;opacity:.2;
+}
 
-    body::before {
-      content:'';
-      position:fixed; inset:0;
-      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events:none; z-index:9999; opacity:.5;
-    }
+.left{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px;min-height:100vh;background:var(--bg);overflow-y:auto;}
+.form-wrap{width:100%;max-width:460px;padding:20px 0;}
 
-    .auth-wrapper { display:flex; height:100vh; }
+.logo{display:flex;align-items:center;gap:10px;font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--ink);text-decoration:none;margin-bottom:36px;}
+.logo .gavel{width:36px;height:36px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#fff;flex-shrink:0;}
+.logo span{color:var(--gold);}
 
-    /* ─── PANNEAU GAUCHE ─── */
-    .form-panel {
-      flex:1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:32px 48px;
-      background:var(--bg);
-      overflow-y:auto;
-      animation:slideLeft .6s ease both;
-    }
-    @keyframes slideLeft { from{opacity:0;transform:translateX(-24px)} to{opacity:1;transform:none} }
+.form-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.form-sub{font-size:.88rem;color:var(--ink-dim);margin-bottom:28px;line-height:1.6;}
 
-    .form-box { width:100%; max-width:420px; }
+/* Barre étapes */
+.steps-bar{display:flex;align-items:center;gap:0;margin-bottom:28px;}
+.step-item{display:flex;align-items:center;gap:8px;flex:1;}
+.step-item:last-child{flex:0;}
+.step-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;transition:all .2s;}
+.step-circle.active{background:var(--gold);color:#fff;box-shadow:0 0 0 4px var(--gold-dim);}
+.step-circle.pending{background:var(--bg3);color:var(--ink-dim);border:1.5px solid var(--border);}
+.step-line{flex:1;height:1px;background:var(--border);margin:0 8px;}
 
-    .form-logo {
-      display:flex; align-items:center; gap:10px;
-      margin-bottom:32px; text-decoration:none;
-    }
-    .form-logo .gavel {
-      width:36px; height:36px; background:var(--gold);
-      border-radius:8px; display:flex; align-items:center; justify-content:center;
-      font-size:.85rem; color:var(--bg);
-    }
-    .form-logo span { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:var(--ink); }
-    .form-logo span em { font-style:normal; color:var(--gold); }
+.alert-err{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.22);border-radius:10px;font-size:.83rem;color:var(--red);margin-bottom:20px;}
 
-    .form-heading { margin-bottom:28px; }
-    .form-heading h1 {
-      font-family:'Playfair Display',serif;
-      font-size:1.85rem; font-weight:700;
-      color:var(--ink); line-height:1.2; margin-bottom:8px;
-    }
-    .form-heading p { font-size:.85rem; color:var(--ink-dim); }
+.trial-badge{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--gold-dim);border:1px solid rgba(194,96,26,.2);border-radius:10px;font-size:.8rem;color:var(--gold);margin-bottom:20px;}
 
-    /* Erreurs */
-    .alert-err {
-      padding:12px 16px;
-      background:rgba(231,76,60,.1);
-      border:1px solid rgba(231,76,60,.3);
-      border-radius:10px;
-      font-size:.8rem; color:var(--red);
-      margin-bottom:20px;
-    }
-    .alert-err ul { padding-left:16px; margin:0; display:flex; flex-direction:column; gap:4px; }
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:.82rem;font-weight:500;color:var(--ink);margin-bottom:6px;}
+.field-wrap{position:relative;}
+.field-wrap i.fi{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-dim);font-size:.85rem;pointer-events:none;}
+.field input,.field select{
+  width:100%;padding:11px 14px 11px 40px;
+  border:1.5px solid var(--border);border-radius:10px;
+  font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--ink);
+  background:var(--bg2);outline:none;
+  transition:border-color .18s,box-shadow .18s,background .18s;
+}
+.field input:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim);background:var(--bg);}
+.toggle-pw{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:.85rem;}
+.toggle-pw:hover{color:var(--gold);}
 
-    /* Grille 2 colonnes pour nom+email */
-    .fields-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+/* Force mot de passe */
+.pw-bars{display:flex;gap:4px;margin-top:8px;margin-bottom:4px;}
+.pw-bar{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s;}
+.pw-bar.weak{background:var(--red);}
+.pw-bar.fair{background:var(--orange);}
+.pw-bar.good{background:var(--gold);}
+.pw-bar.strong{background:var(--green);}
+.pw-text{font-size:.72rem;color:var(--ink-dim);}
+.pw-match{font-size:.72rem;margin-top:5px;}
+.pw-match.ok{color:var(--green);}
+.pw-match.no{color:var(--red);}
 
-    .field { margin-bottom:16px; }
-    .field label {
-      display:block;
-      font-size:.72rem; font-weight:600;
-      color:var(--ink-dim);
-      letter-spacing:.06em; text-transform:uppercase;
-      margin-bottom:7px;
-    }
-    .input-wrap { position:relative; }
-    .input-wrap i.ico {
-      position:absolute; left:13px; top:50%;
-      transform:translateY(-50%);
-      font-size:.78rem; color:var(--ink-dim);
-      pointer-events:none; transition:color .2s;
-    }
-    .input-wrap input {
-      width:100%;
-      padding:11px 13px 11px 36px;
-      background:var(--bg2);
-      border:1px solid var(--border);
-      border-radius:10px;
-      font-family:'DM Sans',sans-serif;
-      font-size:.88rem; color:var(--ink);
-      outline:none;
-      transition:border-color .2s, background .2s;
-    }
-    .input-wrap input::placeholder { color:var(--ink-dim); }
-    .input-wrap input:focus { border-color:var(--gold); background:var(--bg3); }
-    .input-wrap:focus-within i.ico { color:var(--gold); }
+.btn-submit{
+  width:100%;padding:13px;border-radius:10px;
+  background:var(--gold);color:#fff;border:none;
+  font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:600;
+  cursor:pointer;transition:background .18s,transform .15s,box-shadow .18s;
+  box-shadow:0 4px 16px rgba(194,96,26,.25);
+  display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;
+}
+.btn-submit:hover{background:var(--gold-lt);transform:translateY(-1px);box-shadow:0 8px 24px rgba(194,96,26,.35);}
 
-    /* Indicateur force mot de passe */
-    .pw-strength { margin-top:6px; display:flex; gap:4px; align-items:center; }
-    .pw-bar { flex:1; height:3px; border-radius:2px; background:var(--border); transition:background .3s; }
-    .pw-label { font-size:.68rem; color:var(--ink-dim); white-space:nowrap; margin-left:4px; transition:color .3s; }
+.terms{font-size:.75rem;color:var(--ink-dim);text-align:center;margin-top:12px;line-height:1.6;}
+.terms a{color:var(--gold);}
+.login-link{text-align:center;font-size:.85rem;color:var(--ink-dim);margin-top:16px;}
+.login-link a{color:var(--gold);font-weight:600;text-decoration:none;}
+.login-link a:hover{text-decoration:underline;}
 
-    .pw-toggle {
-      position:absolute; right:12px; top:50%;
-      transform:translateY(-50%);
-      background:none; border:none;
-      color:var(--ink-dim); cursor:pointer;
-      font-size:.82rem; transition:color .2s;
-    }
-    .pw-toggle:hover { color:var(--gold); }
+/* DROITE */
+.right{width:420px;flex-shrink:0;background:var(--navy);display:flex;flex-direction:column;justify-content:center;padding:64px 48px;position:relative;overflow:hidden;}
+.right::before{content:'';position:absolute;top:-150px;right:-150px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(194,96,26,.12) 0%,transparent 70%);}
+.right-content{position:relative;z-index:1;}
+.right-logo{display:flex;align-items:center;gap:10px;font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:#f5f0e8;margin-bottom:6px;}
+.right-logo .gavel{width:36px;height:36px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#fff;}
+.right-logo span{color:var(--gold);}
+.right-tagline{font-size:.75rem;color:rgba(245,240,232,.45);margin-bottom:40px;letter-spacing:.08em;text-transform:uppercase;}
+.right-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:#f5f0e8;line-height:1.35;margin-bottom:12px;}
+.right-sub{font-size:.84rem;color:rgba(245,240,232,.55);line-height:1.8;margin-bottom:28px;}
 
-    /* Submit */
-    .btn-submit {
-      width:100%; padding:13px;
-      background:var(--gold); border:none;
-      border-radius:10px;
-      font-family:'DM Sans',sans-serif;
-      font-size:.9rem; font-weight:600;
-      color:var(--bg); cursor:pointer;
-      transition:background .2s, transform .15s, box-shadow .2s;
-      margin-top:4px;
-      display:flex; align-items:center; justify-content:center; gap:8px;
-    }
-    .btn-submit:hover { background:var(--gold-lt); transform:translateY(-1px); box-shadow:0 8px 32px rgba(201,168,76,.25); }
-    .btn-submit:active { transform:none; }
+.offer-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:20px 22px;margin-bottom:16px;}
+.offer-title{font-family:'Playfair Display',serif;font-size:.95rem;color:#f5f0e8;font-weight:700;margin-bottom:3px;}
+.offer-sub{font-size:.75rem;color:rgba(245,240,232,.4);margin-bottom:14px;}
+.offer-items{display:flex;flex-direction:column;gap:7px;}
+.offer-item{display:flex;align-items:center;gap:8px;font-size:.78rem;color:rgba(245,240,232,.65);}
+.offer-item i{color:var(--gold-lt);width:12px;text-align:center;}
 
-    .divider {
-      display:flex; align-items:center; gap:12px;
-      margin:20px 0;
-      font-size:.7rem; color:var(--ink-dim);
-      text-transform:uppercase; letter-spacing:.08em;
-    }
-    .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.right-disclaimer{font-size:.7rem;color:rgba(245,240,232,.3);line-height:1.6;margin-top:14px;}
 
-    .form-footer { text-align:center; font-size:.82rem; color:var(--ink-dim); }
-    .form-footer a { color:var(--gold); text-decoration:none; font-weight:600; transition:color .2s; }
-    .form-footer a:hover { color:var(--gold-lt); }
-
-    /* ─── PANNEAU DROIT ─── */
-    .brand-panel {
-      flex:1;
-      background:var(--bg2);
-      border-left:1px solid var(--border);
-      display:flex; align-items:center; justify-content:center;
-      padding:60px;
-      position:relative; overflow:hidden;
-      animation:slideRight .6s ease both;
-    }
-    @keyframes slideRight { from{opacity:0;transform:translateX(24px)} to{opacity:1;transform:none} }
-
-    .brand-panel::before {
-      content:'';
-      position:absolute;
-      width:500px; height:500px;
-      background:radial-gradient(circle, rgba(201,168,76,.1) 0%, transparent 70%);
-      top:50%; left:50%; transform:translate(-50%,-50%);
-      pointer-events:none;
-    }
-    .brand-panel::after {
-      content:'';
-      position:absolute; top:0; right:0;
-      width:200px; height:200px;
-      background:conic-gradient(from 180deg at 100% 0%, rgba(201,168,76,.15) 0deg, transparent 90deg);
-    }
-
-    .brand-content { position:relative; z-index:2; text-align:center; max-width:360px; }
-
-    .brand-icon {
-      font-size:5rem; color:var(--gold); opacity:.9;
-      margin-bottom:28px; display:block;
-      animation:float 5s ease-in-out infinite;
-    }
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
-
-    .brand-title {
-      font-family:'Playfair Display',serif;
-      font-size:2.2rem; font-weight:900;
-      color:var(--ink); line-height:1.2; margin-bottom:14px;
-    }
-    .brand-title em { font-style:italic; color:var(--gold); }
-
-    .brand-sub { font-size:.87rem; color:var(--ink-dim); line-height:1.8; margin-bottom:36px; }
-
-    /* Steps d'inscription */
-    .brand-steps { display:flex; flex-direction:column; gap:12px; text-align:left; }
-    .step-item {
-      display:flex; align-items:center; gap:14px;
-      padding:14px 18px;
-      background:var(--gold-dim);
-      border:1px solid var(--border);
-      border-radius:10px;
-    }
-    .step-num {
-      width:28px; height:28px; border-radius:50%;
-      background:var(--gold); color:var(--bg);
-      display:flex; align-items:center; justify-content:center;
-      font-size:.75rem; font-weight:700;
-      flex-shrink:0;
-    }
-    .step-item span { font-size:.82rem; color:var(--ink-dim); }
-
-    .brand-deco {
-      position:absolute; bottom:0; left:0;
-      width:160px; height:160px;
-      border-right:1px solid var(--border);
-      border-top:1px solid var(--border);
-      border-radius:0 120px 0 0;
-      opacity:.4;
-    }
-
-    @media (max-width:900px) {
-      .brand-panel { display:none; }
-      .form-panel { padding:32px 24px; }
-      .fields-row { grid-template-columns:1fr; }
-    }
-  </style>
+@media(max-width:900px){.right{display:none;}}
+</style>
 </head>
 <body>
-<div class="auth-wrapper">
+<div class="left">
+  <div class="form-wrap">
 
-  <!-- FORMULAIRE -->
-  <div class="form-panel">
-    <div class="form-box">
+    <a class="logo" href="{{ route('home') }}">
+      <div class="gavel"><i class="fas fa-gavel"></i></div>
+      Rouk<span>Legal</span>
+    </a>
 
-      <a href="{{ url('/') }}" class="form-logo">
-        <div class="gavel"><i class="fas fa-gavel"></i></div>
-        <span>Rouk<em>Legal</em></span>
-      </a>
+    <h1 class="form-title">Créer un compte</h1>
+    <p class="form-sub">Rejoignez RoukLegal et accédez à des conseils juridiques professionnels.</p>
 
-      <div class="form-heading">
-        <h1>Créer votre<br>compte</h1>
-        <p>Rejoignez la plateforme juridique de confiance</p>
+    <div class="steps-bar">
+      <div class="step-item">
+        <div class="step-circle active">1</div>
+        <div class="step-line"></div>
       </div>
-
-      @if($errors->any())
-      <div class="alert-err">
-        <ul>
-          @foreach($errors->all() as $error)
-            <li><i class="fas fa-exclamation-circle" style="margin-right:5px;"></i>{{ $error }}</li>
-          @endforeach
-        </ul>
+      <div class="step-item">
+        <div class="step-circle pending">2</div>
+        <div class="step-line"></div>
       </div>
-      @endif
-
-      <form method="POST" action="{{ route('register') }}">
-        @csrf
-
-        <div class="fields-row">
-          <div class="field">
-            <label for="nom">Nom complet</label>
-            <div class="input-wrap">
-              <i class="fas fa-user ico"></i>
-              <input type="text" id="nom" name="nom" value="{{ old('nom') }}" required placeholder="Jean Dupont">
-            </div>
-          </div>
-          <div class="field">
-            <label for="email">Adresse e-mail</label>
-            <div class="input-wrap">
-              <i class="fas fa-envelope ico"></i>
-              <input type="email" id="email" name="email" value="{{ old('email') }}" required placeholder="vous@exemple.com">
-            </div>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="mot_de_passe">Mot de passe</label>
-          <div class="input-wrap">
-            <i class="fas fa-lock ico"></i>
-            <input type="password" id="mot_de_passe" name="mot_de_passe" required placeholder="Minimum 8 caractères" oninput="checkStrength(this.value)">
-            <button type="button" class="pw-toggle" onclick="togglePw('mot_de_passe','icon1')">
-              <i class="fas fa-eye" id="icon1"></i>
-            </button>
-          </div>
-          <div class="pw-strength">
-            <div class="pw-bar" id="bar1"></div>
-            <div class="pw-bar" id="bar2"></div>
-            <div class="pw-bar" id="bar3"></div>
-            <div class="pw-bar" id="bar4"></div>
-            <span class="pw-label" id="pwLabel">—</span>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="mot_de_passe_confirmation">Confirmer le mot de passe</label>
-          <div class="input-wrap">
-            <i class="fas fa-lock ico"></i>
-            <input type="password" id="mot_de_passe_confirmation" name="mot_de_passe_confirmation" required placeholder="Répétez le mot de passe" oninput="checkConfirm(this.value)">
-            <button type="button" class="pw-toggle" onclick="togglePw('mot_de_passe_confirmation','icon2')">
-              <i class="fas fa-eye" id="icon2"></i>
-            </button>
-          </div>
-          <div id="matchMsg" style="font-size:.7rem;margin-top:5px;display:none;"></div>
-        </div>
-
-        <button type="submit" class="btn-submit">
-          <i class="fas fa-user-plus"></i> Créer mon compte
-        </button>
-      </form>
-
-      <div class="divider">déjà inscrit ?</div>
-
-      <div class="form-footer">
-        <a href="{{ route('login') }}"><i class="fas fa-sign-in-alt" style="margin-right:5px;"></i>Se connecter à mon compte</a>
+      <div class="step-item">
+        <div class="step-circle pending">3</div>
       </div>
-
     </div>
-  </div>
 
-  <!-- BRANDING -->
-  <div class="brand-panel">
-    <div class="brand-deco"></div>
-    <div class="brand-content">
-      <i class="fas fa-gavel brand-icon"></i>
-      <div class="brand-title">Rejoignez<br><em>RoukLegal</em><br>aujourd'hui</div>
-      <p class="brand-sub">Accédez à des conseils juridiques professionnels en quelques minutes seulement.</p>
-      <div class="brand-steps">
-        @foreach([
-          ['Créez votre compte gratuitement'],
-          ['Choisissez votre rôle (client ou acteur)'],
-          ['Accédez aux articles et experts'],
-          ['Posez vos questions et obtenez des réponses'],
-        ] as $i => $s)
-        <div class="step-item">
-          <div class="step-num">{{ $i + 1 }}</div>
-          <span>{{ $s[0] }}</span>
+    @if($errors->any())
+    <div class="alert-err">
+      <i class="fas fa-exclamation-circle" style="flex-shrink:0;margin-top:2px;"></i>
+      <div>@foreach($errors->all() as $e)<div>{{ $e }}</div>@endforeach</div>
+    </div>
+    @endif
+
+    <div class="trial-badge">
+      <i class="fas fa-gift"></i>
+      <span><strong>2 semaines d'essai gratuit</strong> — Aucune carte bancaire requise</span>
+    </div>
+
+    <form method="POST" action="{{ route('register') }}">
+      @csrf
+
+      <div class="field">
+        <label for="nom">Nom complet <span style="color:var(--red)">*</span></label>
+        <div class="field-wrap">
+          <i class="fas fa-user fi"></i>
+          <input type="text" id="nom" name="nom" placeholder="Votre nom complet" value="{{ old('nom') }}" required>
         </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Adresse e-mail <span style="color:var(--red)">*</span></label>
+        <div class="field-wrap">
+          <i class="fas fa-envelope fi"></i>
+          <input type="email" id="email" name="email" placeholder="votre@email.com" value="{{ old('email') }}" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="mot_de_passe">Mot de passe <span style="color:var(--red)">*</span></label>
+        <div class="field-wrap">
+          <i class="fas fa-lock fi"></i>
+          <input type="password" id="mot_de_passe" name="mot_de_passe" placeholder="Minimum 8 caractères" required oninput="checkStrength(this.value)">
+          <button type="button" class="toggle-pw" onclick="togglePw('mot_de_passe','ico1')"><i class="fas fa-eye" id="ico1"></i></button>
+        </div>
+        <div class="pw-bars">
+          <div class="pw-bar" id="b1"></div><div class="pw-bar" id="b2"></div>
+          <div class="pw-bar" id="b3"></div><div class="pw-bar" id="b4"></div>
+        </div>
+        <div class="pw-text" id="pw-label">Entrez un mot de passe</div>
+      </div>
+
+      <div class="field">
+        <label for="mot_de_passe_confirmation">Confirmer le mot de passe <span style="color:var(--red)">*</span></label>
+        <div class="field-wrap">
+          <i class="fas fa-lock fi"></i>
+          <input type="password" id="mot_de_passe_confirmation" name="mot_de_passe_confirmation" placeholder="Répétez votre mot de passe" required oninput="checkMatch()">
+          <button type="button" class="toggle-pw" onclick="togglePw('mot_de_passe_confirmation','ico2')"><i class="fas fa-eye" id="ico2"></i></button>
+        </div>
+        <div class="pw-match" id="match-msg"></div>
+      </div>
+
+      <button type="submit" class="btn-submit"><i class="fas fa-user-plus"></i> Créer mon compte</button>
+    </form>
+
+    <p class="terms">En créant un compte, vous acceptez nos <a href="#">Conditions d'utilisation</a> et notre <a href="#">Politique de confidentialité</a>.</p>
+    <div class="login-link">Déjà un compte ? <a href="{{ route('login') }}">Se connecter</a></div>
+
+  </div>
+</div>
+
+<div class="right">
+  <div class="right-content">
+    <div class="right-logo"><div class="gavel"><i class="fas fa-gavel"></i></div>Rouk<span>Legal</span></div>
+    <div class="right-tagline">Plateforme juridique professionnelle</div>
+    <h2 class="right-title">Commencez gratuitement pendant 2 semaines</h2>
+    <p class="right-sub">Accédez à toutes les fonctionnalités sans engagement.</p>
+    <div class="offer-card">
+      <div class="offer-title">Inclus dans l'essai gratuit</div>
+      <div class="offer-sub">14 jours · Aucune carte requise</div>
+      <div class="offer-items">
+        @foreach(['Accès illimité aux articles juridiques','Poser des questions aux experts','Messagerie sécurisée','Annuaire des acteurs juridiques','Prise de rendez-vous (10 000 FCFA/séance)'] as $f)
+        <div class="offer-item"><i class="fas fa-check"></i> {{ $f }}</div>
         @endforeach
       </div>
     </div>
+    <div class="offer-card">
+      <div class="offer-title">Vous êtes professionnel du droit ?</div>
+      <div class="offer-sub">Rejoignez en tant qu'acteur juridique</div>
+      <div class="offer-items">
+        @foreach(['Publiez vos articles','Répondez aux questions','Gérez vos créneaux & RDV','Percevez 80% du tarif de consultation'] as $f)
+        <div class="offer-item"><i class="fas fa-check"></i> {{ $f }}</div>
+        @endforeach
+      </div>
+    </div>
+    <p class="right-disclaimer">Après l'essai, un abonnement mensuel est requis. Résiliable à tout moment.</p>
   </div>
-
 </div>
 
 <script>
-function togglePw(id, iconId) {
-  const input = document.getElementById(id);
-  const icon  = document.getElementById(iconId);
-  input.type  = input.type === 'password' ? 'text' : 'password';
-  icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+function togglePw(id,ico){
+  const inp=document.getElementById(id);const ic=document.getElementById(ico);
+  inp.type=inp.type==='password'?'text':'password';
+  ic.className=inp.type==='password'?'fas fa-eye':'fas fa-eye-slash';
 }
-
-const colors = { 1:'#e74c3c', 2:'#e67e22', 3:'#f1c40f', 4:'#27ae60' };
-const labels = { 0:'—', 1:'Faible', 2:'Moyen', 3:'Bon', 4:'Fort' };
-
-function checkStrength(val) {
-  let score = 0;
-  if(val.length >= 8) score++;
-  if(/[A-Z]/.test(val)) score++;
-  if(/[0-9]/.test(val)) score++;
-  if(/[^A-Za-z0-9]/.test(val)) score++;
-  const c = score > 0 ? colors[score] : 'var(--border)';
-  for(let i=1;i<=4;i++) {
-    document.getElementById('bar'+i).style.background = i <= score ? c : 'var(--border)';
-  }
-  const lbl = document.getElementById('pwLabel');
-  lbl.textContent = labels[score];
-  lbl.style.color = score > 0 ? c : 'var(--ink-dim)';
+function checkStrength(v){
+  const bars=[document.getElementById('b1'),document.getElementById('b2'),document.getElementById('b3'),document.getElementById('b4')];
+  const lbl=document.getElementById('pw-label');
+  bars.forEach(b=>{b.className='pw-bar';});
+  if(!v){lbl.textContent='Entrez un mot de passe';return;}
+  let s=0;
+  if(v.length>=8)s++;if(/[A-Z]/.test(v))s++;if(/[0-9]/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;
+  const cls=['weak','fair','good','strong'];
+  const lbls=['Trop faible','Passable','Bien','Fort'];
+  for(let i=0;i<s;i++)bars[i].className='pw-bar '+cls[s-1];
+  lbl.textContent='Force : '+lbls[s-1];
+  lbl.style.color=s<=1?'var(--red)':s===2?'var(--orange)':s===3?'var(--gold)':'var(--green)';
 }
-
-function checkConfirm(val) {
-  const pw  = document.getElementById('mot_de_passe').value;
-  const msg = document.getElementById('matchMsg');
-  msg.style.display = val.length > 0 ? 'block' : 'none';
-  if(val === pw) {
-    msg.textContent = '✓ Les mots de passe correspondent';
-    msg.style.color = '#27ae60';
-  } else {
-    msg.textContent = '✗ Les mots de passe ne correspondent pas';
-    msg.style.color = '#e74c3c';
-  }
+function checkMatch(){
+  const pw=document.getElementById('mot_de_passe').value;
+  const cf=document.getElementById('mot_de_passe_confirmation').value;
+  const msg=document.getElementById('match-msg');
+  if(!cf){msg.textContent='';return;}
+  if(pw===cf){msg.className='pw-match ok';msg.innerHTML='<i class="fas fa-check"></i> Les mots de passe correspondent';}
+  else{msg.className='pw-match no';msg.innerHTML='<i class="fas fa-times"></i> Les mots de passe ne correspondent pas';}
 }
 </script>
 </body>
