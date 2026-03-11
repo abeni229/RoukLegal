@@ -54,10 +54,15 @@
           <div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:{{ $titleColor[$subType] }};line-height:1;">{{ $subscriptionDaysLeft }}</div>
           <div style="font-size:.7rem;color:var(--txt-muted);">jours restants</div>
         </div>
-        <a href="{{ route('settings.edit') }}" class="rl-btn-outline">Gérer</a>
-      @else
+        <a href="{{ route('client.abonnement') }}" class="rl-btn-outline">Gérer</a>
+      @elseif($subType === 'none')
         <a href="#" class="rl-btn" onclick="event.preventDefault();fetch('{{ route('client.startTrial') }}',{method:'POST',headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'}}).then(()=>location.reload())">
-          {{ $subType==='none' ? 'Démarrer l\'essai gratuit' : 'Renouveler' }}
+          Démarrer l'essai gratuit
+        </a>
+      @else
+        {{-- expired --}}
+        <a href="{{ route('client.abonnement') }}" class="rl-btn">
+          <i class="fas fa-refresh"></i> Renouveler
         </a>
       @endif
     </div>

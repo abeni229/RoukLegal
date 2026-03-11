@@ -122,9 +122,9 @@ class AdminController extends Controller
 
 public function paiements()
 {
-    $paiements = \App\Models\Paiement::with(['user', 'acteurJuridique'])
-        ->orderBy('created_at', 'desc')
-        ->paginate(15);
+    $paiements = \App\Models\Paiement::with(['client', 'acteur'])
+    ->orderBy('created_at', 'desc')
+    ->paginate(15);
 
     return view('admin.paiements', compact('paiements'));
 }
@@ -139,5 +139,33 @@ public function commissions()
     $totalAdmin = $rdvs->sum('commission_admin');
 
     return view('admin.commissions', compact('rdvs', 'totalAdmin'));
+}
+
+public function retraits()
+{
+    $demandes = \App\Models\DemandeRetrait::with('acteur')
+        ->orderBy('created_at', 'desc')
+        ->paginate(20);
+
+    $stats = [
+        'en_attente'      => \App\Models\DemandeRetrait::where('statut','en_attente')->count(),
+        'montant_attente' => \App\Models\DemandeRetrait::where('statut','en_attente')->sum('montant'),
+        'traites'         => \App\Models\DemandeRetrait::where('statut','traite')->count(),
+        'montant_traite'  => \App\Models\DemandeRetrait::where('statut','traite')->sum('montant'),
+    ];
+
+    return view('admin.retraits', compact('demandes','stats'));
+}
+
+public function traiterRetrait(\App\Models\DemandeRetrait $retrait)
+{
+    $retrait->update(['statut' => 'traite']);
+    return back()->with('status', 'Retrait marqué comme traité.');
+}
+
+public function refuserRetrait(\Illuminate\Http\Request $request, \App\Models\DemandeRetrait $retrait)
+{
+    $retrait->update(['statut' => 'refuse', 'note_admin' => $request->note_admin]);
+    return back()->with('status', 'Retrait refusé.');
 }
 }

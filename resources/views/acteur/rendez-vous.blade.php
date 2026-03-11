@@ -17,7 +17,9 @@
   $statuts = [
     'en_attente'      => ['label'=>'En attente','color'=>'var(--orange)','bg'=>'var(--orange-dim)'],
     'payé'            => ['label'=>'Payé — en attente admin','color'=>'var(--blue)','bg'=>'rgba(52,152,219,.08)'],
+    'valide_admin'    => ['label'=>'Validé — à confirmer','color'=>'var(--gold)','bg'=>'var(--gold-dim)'],
     'validé_admin'    => ['label'=>'Validé — à confirmer','color'=>'var(--gold)','bg'=>'var(--gold-dim)'],
+    'confirme_acteur' => ['label'=>'Confirmé','color'=>'var(--green)','bg'=>'var(--green-dim)'],
     'confirmé_acteur' => ['label'=>'Confirmé','color'=>'var(--green)','bg'=>'var(--green-dim)'],
     'refusé'          => ['label'=>'Refusé','color'=>'var(--red)','bg'=>'var(--red-dim)'],
     'remboursé'       => ['label'=>'Remboursé','color'=>'var(--txt-muted)','bg'=>'var(--surface2)'],
@@ -33,9 +35,9 @@
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
     @foreach([
       ['📋','Total',$rdvs->total(),'var(--gold)'],
-      ['⏳','À confirmer',$all->where('statut_paiement','validé_admin')->count(),'var(--gold)'],
-      ['✅','Confirmés',$all->where('statut_paiement','confirmé_acteur')->count(),'var(--green)'],
-      ['💵','Revenus',$all->where('statut_paiement','confirmé_acteur')->sum('commission_acteur').' F','var(--blue)'],
+      ['⏳','À confirmer',$all->whereIn('statut_paiement',['valide_admin','validé_admin'])->count(),'var(--gold)'],
+      ['✅','Confirmés',$all->whereIn('statut_paiement',['confirme_acteur','confirmé_acteur'])->count(),'var(--green)'],
+      ['💵','Revenus',$all->whereIn('statut_paiement',['confirme_acteur','confirmé_acteur'])->sum('commission_acteur').' F','var(--blue)'],
     ] as $s)
     <div class="rl-stat-card fade-up" style="--accent:{{ $s[3] }};">
       <div class="rl-stat-header"><span class="rl-stat-label">{{ $s[1] }}</span><span>{{ $s[0] }}</span></div>
@@ -84,7 +86,7 @@
 
         {{-- Actions --}}
         <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
-          @if($rdv->statut_paiement === 'validé_admin')
+          @if(in_array($rdv->statut_paiement, ['valide_admin','validé_admin']))
           <form method="POST" action="{{ route('acteur.rdv.confirmer', $rdv->id) }}">
             @csrf
             <button type="submit" class="rl-btn" style="padding:8px 16px;font-size:.78rem;white-space:nowrap;background:var(--green);">
@@ -97,11 +99,11 @@
               <i class="fas fa-times"></i> Refuser
             </button>
           </form>
-          @elseif($rdv->statut_paiement === 'payé')
+          @elseif(in_array($rdv->statut_paiement, ['paye','payé']))
           <div style="padding:8px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);font-size:.72rem;color:var(--txt-muted);text-align:center;">
             ⏳ En attente<br>validation admin
           </div>
-          @elseif($rdv->statut_paiement === 'confirmé_acteur')
+          @elseif(in_array($rdv->statut_paiement, ['confirme_acteur','confirmé_acteur']))
           <div style="padding:8px 14px;background:var(--green-dim);border-radius:8px;border:1px solid rgba(39,174,96,.2);font-size:.72rem;color:var(--green);text-align:center;">
             ✓ Confirmé
           </div>

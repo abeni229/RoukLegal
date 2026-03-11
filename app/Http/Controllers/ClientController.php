@@ -185,8 +185,14 @@ class ClientController extends Controller
             ];
         }
 
-        $lastPaiement = $user->paiements()->latest('date_paiement')->first();
-        if ($lastPaiement && isset($lastPaiement->expiry_date) && $lastPaiement->expiry_date >= $now) {
+                // Abonnement payant actif
+        $lastPaiement = $user->paiements()
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '>=', $now)
+            ->latest('created_at')
+            ->first();
+
+        if ($lastPaiement) {
             return [
                 'subscriptionType'     => 'active',
                 'subscriptionLabel'    => 'Abonnement actif',
@@ -223,4 +229,64 @@ class ClientController extends Controller
             ->limit(5)
             ->get();
     }
+
+    /**
+     * Affiche la page de choix d'abonnement.
+     */
+    public function abonnement()
+    {
+        $user         = Auth::user();
+        $subscription = $this->getSubscriptionStatus($user);
+        $historique   = $user->paiements()->orderBy('created_at', 'desc')->get();
+
+        return view('client.abonnement', array_merge($subscription, [
+            'historique'  => $historique,
+            'withSidebar' => true,
+        ]));
+    }
+
+    /**
+     * Traite le paiement d'un abonnement (sandbox).
+     */
+    public function payerAbonnement(Request $request)
+    {
+        $request->validate([
+            'formule' => 'required|in:mensuel,trimestriel,annuel',
+            'montant' => 'required|integer|min:1000',
+            'methode' => 'required|in:mobile_money,carte',
+        ]);
+
+        $user = Auth::user();
+
+        $durees = [
+            'mensuel'      => 1,
+            'trimestriel'  => 3,
+            'annuel'       => 12,
+        ];
+
+        $mois      = $durees[$request->formule];
+        $expiry    = now()->addMonths($mois);
+
+        // Créer le paiement
+        $paiement =$user->paiements()->create([
+            'montant'       => $request->montant,
+            'methode'       => $request->methode,
+            'statut'        => 'paye',
+            'date_paiement' => now(),
+            'formule'       => $request->formule,
+            'expiry_date'   => $expiry,
+        ]);
+
+        // Mettre à jour l'abonnement utilisateur
+        $user->update([
+            'is_subscribed'       => true,
+            'subscription_start'  => now(),
+            'subscription_end'    => $expiry,
+        ]);
+
+        return redirect()->route('client.abonnement')
+            ->with('status', 'Abonnement ' . $request->formule . ' activé jusqu\'au ' . $expiry->format('d/m/Y') . ' !');
+    }
+
+    
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CreneauController;
 use App\Http\Controllers\RendezVousController;
 
+
 // Homepage - Show landing page or redirect to dashboard
 Route::get('/', function () {
     if (!Auth::check()) {
@@ -139,4 +140,17 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/rendez-vous',   [RendezVousController::class, 'adminIndex'])->name('admin.rendezVous');
     Route::post('/rendez-vous/{rdv}/valider',    [RendezVousController::class, 'validerAdmin'])->name('admin.rdv.valider');
     Route::post('/rendez-vous/{rdv}/rembourser', [RendezVousController::class, 'rembourserAdmin'])->name('admin.rdv.rembourser');
+});
+
+// Acteur — retraits
+Route::middleware(['auth'])->group(function () {
+    Route::get('/acteur/retraits',       [ActeurController::class, 'retraits'])->name('acteur.retraits');
+    Route::post('/acteur/retraits',      [ActeurController::class, 'storeRetrait'])->name('acteur.retraits.store');
+});
+
+// Admin — retraits
+Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::get('/retraits',              [AdminController::class, 'retraits'])->name('admin.retraits');
+    Route::post('/retraits/{retrait}/traiter',  [AdminController::class, 'traiterRetrait'])->name('admin.retraits.traiter');
+    Route::post('/retraits/{retrait}/refuser',  [AdminController::class, 'refuserRetrait'])->name('admin.retraits.refuser');
 });

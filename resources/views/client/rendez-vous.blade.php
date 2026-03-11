@@ -14,14 +14,19 @@
 
 @section('content')
 @php
-  $statuts = [
-    'en_attente'      => ['label'=>'En attente','color'=>'var(--orange)','bg'=>'var(--orange-dim)','icon'=>'⏳'],
-    'payé'            => ['label'=>'Paiement reçu','color'=>'var(--blue)','bg'=>'rgba(52,152,219,.08)','icon'=>'💳'],
-    'validé_admin'    => ['label'=>'Validé — en attente acteur','color'=>'var(--gold)','bg'=>'var(--gold-dim)','icon'=>'✔️'],
-    'confirmé_acteur' => ['label'=>'Confirmé','color'=>'var(--green)','bg'=>'var(--green-dim)','icon'=>'✅'],
-    'refusé'          => ['label'=>'Refusé','color'=>'var(--red)','bg'=>'var(--red-dim)','icon'=>'❌'],
-    'remboursé'       => ['label'=>'Remboursé','color'=>'var(--txt-muted)','bg'=>'var(--surface2)','icon'=>'↩️'],
-  ];
+$statuts = [
+  'en_attente'      => ['label'=>'En attente',          'color'=>'var(--orange)',   'bg'=>'var(--orange-dim)',          'icon'=>'⏳'],
+  'paye'            => ['label'=>'Paiement reçu',        'color'=>'var(--blue)',     'bg'=>'rgba(52,152,219,.08)',        'icon'=>'💳'],
+  'payé'            => ['label'=>'Paiement reçu',        'color'=>'var(--blue)',     'bg'=>'rgba(52,152,219,.08)',        'icon'=>'💳'],
+  'valide_admin'    => ['label'=>'Validé par admin',     'color'=>'var(--gold)',     'bg'=>'var(--gold-dim)',             'icon'=>'✔️'],
+  'validé_admin'    => ['label'=>'Validé par admin',     'color'=>'var(--gold)',     'bg'=>'var(--gold-dim)',             'icon'=>'✔️'],
+  'confirme_acteur' => ['label'=>'Confirmé',             'color'=>'var(--green)',    'bg'=>'var(--green-dim)',            'icon'=>'✅'],
+  'confirmé_acteur' => ['label'=>'Confirmé',             'color'=>'var(--green)',    'bg'=>'var(--green-dim)',            'icon'=>'✅'],
+  'refuse'          => ['label'=>'Refusé',               'color'=>'var(--red)',      'bg'=>'var(--red-dim)',              'icon'=>'❌'],
+  'refusé'          => ['label'=>'Refusé',               'color'=>'var(--red)',      'bg'=>'var(--red-dim)',              'icon'=>'❌'],
+  'rembourse'       => ['label'=>'Remboursé',            'color'=>'var(--txt-muted)','bg'=>'var(--surface2)',            'icon'=>'↩️'],
+  'remboursé'       => ['label'=>'Remboursé',            'color'=>'var(--txt-muted)','bg'=>'var(--surface2)',            'icon'=>'↩️'],
+];
 @endphp
 
 <div style="display:flex;flex-direction:column;gap:24px;">
@@ -36,12 +41,12 @@
     </div>
     <div class="rl-stat-card fade-up" style="--accent:var(--green);animation-delay:.07s">
       <div class="rl-stat-header"><span class="rl-stat-label">Confirmés</span><span>✅</span></div>
-      <div class="rl-stat-value">{{ $all->where('statut_paiement','confirmé_acteur')->count() }}</div>
+      <div class="rl-stat-value">{{ $all->whereIn('statut_paiement',['confirme_acteur','confirmé_acteur'])->count() }}</div>
       <div class="rl-stat-sub">Consultations à venir</div>
     </div>
     <div class="rl-stat-card fade-up" style="--accent:var(--blue);animation-delay:.13s">
       <div class="rl-stat-header"><span class="rl-stat-label">En cours</span><span>⏳</span></div>
-      <div class="rl-stat-value">{{ $all->whereIn('statut_paiement',['payé','validé_admin'])->count() }}</div>
+      <div class="rl-stat-value">{{ $all->whereIn('statut_paiement',['paye','payé','valide_admin','validé_admin'])->count() }}</div>
       <div class="rl-stat-sub">En attente de confirmation</div>
     </div>
   </div>
@@ -93,30 +98,10 @@
           </div>
         </div>
 
-        {{-- Timeline statut --}}
-        <div style="display:flex;flex-direction:column;gap:4px;min-width:160px;flex-shrink:0;">
-          @foreach([
-            ['payé','Paiement reçu'],
-            ['validé_admin','Validé par admin'],
-            ['confirmé_acteur','Confirmé par acteur'],
-          ] as $step)
-          @php
-            $done = match($rdv->statut_paiement) {
-              'payé'           => in_array($step[0],['payé']),
-              'validé_admin'   => in_array($step[0],['payé','validé_admin']),
-              'confirmé_acteur'=> in_array($step[0],['payé','validé_admin','confirmé_acteur']),
-              default          => false
-            };
-          @endphp
-          <div style="display:flex;align-items:center;gap:8px;font-size:.72rem;color:{{ $done ? 'var(--green)' : 'var(--txt-muted)' }};">
-            <span style="width:16px;height:16px;border-radius:50%;background:{{ $done ? 'var(--green)' : 'var(--surface2)' }};border:1px solid {{ $done ? 'var(--green)' : 'var(--border)' }};display:flex;align-items:center;justify-content:center;font-size:.55rem;flex-shrink:0;">
-              {{ $done ? '✓' : '' }}
-            </span>
-            {{ $step[1] }}
-          </div>
-          @endforeach
-          @if(in_array($rdv->statut_paiement,['refusé','remboursé']))
-          <div style="font-size:.72rem;color:var(--red);margin-top:4px;">{{ $rdv->statut_paiement === 'refusé' ? '❌ Refusé' : '↩️ Remboursé' }}</div>
+       
+          
+          @if(in_array($rdv->statut_paiement,['refuse','refusé','rembourse','remboursé']))
+          <div style="font-size:.72rem;color:var(--red);margin-top:4px;">{{ in_array($rdv->statut_paiement,['refuse','refusé']) ? '❌ Refusé' : '↩️ Remboursé' }}</div>
           @endif
         </div>
 

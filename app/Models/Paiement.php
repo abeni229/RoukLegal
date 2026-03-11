@@ -16,10 +16,13 @@ class Paiement extends Model
         'methode',
         'statut',
         'date_paiement',
+        'formule',
+        'expiry_date',
     ];
 
     protected $casts = [
         'date_paiement' => 'datetime',
+        'expiry_date'   => 'datetime',
     ];
 
     public function client()

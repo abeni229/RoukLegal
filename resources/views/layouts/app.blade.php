@@ -532,6 +532,20 @@
          href="{{ route('acteur.profile') }}">
         <i class="fas fa-id-card"></i> Mon profil
       </a>
+            <a class="rl-nav-item {{ request()->routeIs('acteur.retraits') ? 'active' : '' }}"
+        href="{{ route('acteur.retraits') }}">
+        <i class="fas fa-wallet"></i> Mes retraits
+        @php
+          $soldeActeur = max(0,
+            \App\Models\RendezVous::where('acteurjuridique_id', Auth::id())
+              ->whereIn('statut_paiement',['confirme_acteur','confirmé_acteur'])->sum('commission_acteur')
+            - \App\Models\DemandeRetrait::where('user_id', Auth::id())->whereIn('statut',['traite','en_attente'])->sum('montant')
+          );
+        @endphp
+        @if($soldeActeur > 0)
+          <span class="rl-nav-badge gold">{{ number_format($soldeActeur/1000,0) }}k</span>
+        @endif
+      </a>
       <div class="rl-sidebar-section">Compte</div>
       <a class="rl-nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}"
          href="{{ route('settings.edit') }}">
@@ -545,15 +559,15 @@
         <i class="fas fa-chart-line"></i> Tableau de bord
       </a>
       <a class="rl-nav-item {{ request()->routeIs('admin.users') ? 'active' : '' }}"
-         href="#">
+         href="{{ route('admin.users') }}">
         <i class="fas fa-users"></i> Utilisateurs
       </a>
       <a class="rl-nav-item {{ request()->routeIs('admin.paiements') ? 'active' : '' }}"
-         href="#">
+         href="{{ route('admin.paiements') }}">
         <i class="fas fa-credit-card"></i> Paiements
       </a>
       <a class="rl-nav-item {{ request()->routeIs('admin.commissions') ? 'active' : '' }}"
-         href="#">
+         href="{{ route('admin.commissions') }}">
         <i class="fas fa-percentage"></i> Commissions
       </a>
 
@@ -570,6 +584,14 @@
           <span class="rl-nav-badge">{{ $rdvAdminAttente }}</span>
         @endif
       </a>
+    <a class="rl-nav-item {{ request()->routeIs('admin.retraits') ? 'active' : '' }}"
+      href="{{ route('admin.retraits') }}">
+      <i class="fas fa-wallet"></i> Retraits
+      @php $retraitsPending = \App\Models\DemandeRetrait::where('statut','en_attente')->count(); @endphp
+      @if($retraitsPending > 0)
+        <span class="rl-nav-badge">{{ $retraitsPending }}</span>
+      @endif
+    </a>
 
       <div class="rl-sidebar-section">Compte</div>
       <a class="rl-nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}"

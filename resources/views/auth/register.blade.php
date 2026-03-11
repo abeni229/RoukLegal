@@ -153,16 +153,13 @@ body::before{
     </div>
     @endif
 
-    <div class="trial-badge">
-      <i class="fas fa-gift"></i>
-      <span><strong>2 semaines d'essai gratuit</strong> — Aucune carte bancaire requise</span>
-    </div>
+ 
 
     <form method="POST" action="{{ route('register') }}">
       @csrf
 
       <div class="field">
-        <label for="nom">Nom complet <span style="color:var(--red)">*</span></label>
+        <label for="nom">Nom complet <span style="color:var(--red)"></span></label>
         <div class="field-wrap">
           <i class="fas fa-user fi"></i>
           <input type="text" id="nom" name="nom" placeholder="Votre nom complet" value="{{ old('nom') }}" required>
@@ -170,7 +167,7 @@ body::before{
       </div>
 
       <div class="field">
-        <label for="email">Adresse e-mail <span style="color:var(--red)">*</span></label>
+        <label for="email">Adresse e-mail <span style="color:var(--red)"></span></label>
         <div class="field-wrap">
           <i class="fas fa-envelope fi"></i>
           <input type="email" id="email" name="email" placeholder="votre@email.com" value="{{ old('email') }}" required>
@@ -178,7 +175,7 @@ body::before{
       </div>
 
       <div class="field">
-        <label for="mot_de_passe">Mot de passe <span style="color:var(--red)">*</span></label>
+        <label for="mot_de_passe">Mot de passe <span style="color:var(--red)"></span></label>
         <div class="field-wrap">
           <i class="fas fa-lock fi"></i>
           <input type="password" id="mot_de_passe" name="mot_de_passe" placeholder="Minimum 8 caractères" required oninput="checkStrength(this.value)">
@@ -192,7 +189,7 @@ body::before{
       </div>
 
       <div class="field">
-        <label for="mot_de_passe_confirmation">Confirmer le mot de passe <span style="color:var(--red)">*</span></label>
+        <label for="mot_de_passe_confirmation">Confirmer le mot de passe <span style="color:var(--red)"></span></label>
         <div class="field-wrap">
           <i class="fas fa-lock fi"></i>
           <input type="password" id="mot_de_passe_confirmation" name="mot_de_passe_confirmation" placeholder="Répétez votre mot de passe" required oninput="checkMatch()">

@@ -191,4 +191,56 @@ class ActeurController extends Controller
             $user->photo_professionnelle = $path;
         }
     }
+
+    public function retraits()
+{
+    $totalGagne = \App\Models\RendezVous::where('acteurjuridique_id', Auth::id())
+        ->whereIn('statut_paiement', ['confirme_acteur','confirmé_acteur'])
+        ->sum('commission_acteur');
+
+    $dejaRetire = \App\Models\DemandeRetrait::where('user_id', Auth::id())
+        ->whereIn('statut', ['traite','en_attente'])
+        ->sum('montant');
+
+    $soldeDisponible = max(0, $totalGagne - $dejaRetire);
+
+    $enAttente = \App\Models\DemandeRetrait::where('user_id', Auth::id())
+        ->where('statut', 'en_attente')
+        ->sum('montant');
+
+    $demandes = \App\Models\DemandeRetrait::where('user_id', Auth::id())
+        ->orderBy('created_at', 'desc')
+        ->paginate(10);
+
+    return view('acteur.retraits', compact('totalGagne','soldeDisponible','enAttente','demandes'));
+}
+
+public function storeRetrait(Request $request)
+{
+    $totalGagne = \App\Models\RendezVous::where('acteurjuridique_id', Auth::id())
+        ->whereIn('statut_paiement', ['confirme_acteur','confirmé_acteur'])
+        ->sum('commission_acteur');
+
+    $dejaRetire = \App\Models\DemandeRetrait::where('user_id', Auth::id())
+        ->whereIn('statut', ['traite','en_attente'])
+        ->sum('montant');
+
+    $soldeDisponible = max(0, $totalGagne - $dejaRetire);
+
+    $request->validate([
+        'montant'       => 'required|numeric|min:1000|max:'.$soldeDisponible,
+        'methode'       => 'required|in:mtn_money,moov_money,virement',
+        'numero_compte' => 'required|string|max:100',
+    ]);
+
+    \App\Models\DemandeRetrait::create([
+        'user_id'       => Auth::id(),
+        'montant'       => $request->montant,
+        'methode'       => $request->methode,
+        'numero_compte' => $request->numero_compte,
+        'statut'        => 'en_attente',
+    ]);
+
+    return redirect()->route('acteur.retraits')->with('status', 'Demande envoyée avec succès.');
+}
 }
