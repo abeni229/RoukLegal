@@ -497,6 +497,13 @@
          href="{{ route('articles.create') }}">
         <i class="fas fa-pen"></i> Nouvel article
       </a>
+      <a class="rl-nav-item {{ request()->routeIs('acteur.abonnement') ? 'active' : '' }}"
+    href="{{ route('acteur.abonnement') }}">
+    <i class="fas fa-crown"></i> Mon abonnement
+    @if(!Auth::user()->isActeurAbonne())
+      <span class="rl-nav-badge" style="background:var(--red);">!</span>
+    @endif
+    </a>
 
       {{-- Rendez-vous acteur --}}
       <div style="height:1px;background:rgba(255,255,255,.06);margin:8px 14px;"></div>

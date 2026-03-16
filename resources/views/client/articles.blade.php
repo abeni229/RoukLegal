@@ -84,7 +84,29 @@
     @endforeach
   </div>
 
-  <div style="display:flex;justify-content:center;">{{ $articles->links() }}</div>
+ @if($articles->hasPages())
+<div style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:24px;">
+  @if($articles->onFirstPage())
+    <span style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);color:var(--txt-muted);font-size:.82rem;">←</span>
+  @else
+    <a href="{{ $articles->previousPageUrl() }}" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);color:var(--txt);text-decoration:none;font-size:.82rem;transition:all .15s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--txt)'">←</a>
+  @endif
+
+  @foreach($articles->getUrlRange(1, $articles->lastPage()) as $page => $url)
+    @if($page == $articles->currentPage())
+      <span style="padding:7px 14px;border-radius:8px;background:var(--gold);color:var(--ink);font-size:.82rem;font-weight:600;">{{ $page }}</span>
+    @else
+      <a href="{{ $url }}" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);color:var(--txt);text-decoration:none;font-size:.82rem;transition:all .15s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--txt)'">{{ $page }}</a>
+    @endif
+  @endforeach
+
+  @if($articles->hasMorePages())
+    <a href="{{ $articles->nextPageUrl() }}" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);color:var(--txt);text-decoration:none;font-size:.82rem;transition:all .15s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--txt)'">→</a>
+  @else
+    <span style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);color:var(--txt-muted);font-size:.82rem;">→</span>
+  @endif
+</div>
+@endif
 
   @else
   <div class="rl-card" style="text-align:center;padding:48px 32px;">

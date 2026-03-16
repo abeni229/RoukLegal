@@ -15,6 +15,24 @@
 @section('content')
 <div style="display:flex;flex-direction:column;gap:28px;">
 
+  {{-- BANNIÈRE ABONNEMENT --}}
+  @php $acteurAbonne = Auth::user()->isActeurAbonne(); @endphp
+  @if(!$acteurAbonne)
+  <div style="background:linear-gradient(135deg,#2d1a0e,#3d2412);border:1.5px solid rgba(231,76,60,.4);border-radius:var(--radius);padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#e74c3c;margin-bottom:6px;">
+        ⚠️ Votre profil est masqué des clients
+      </div>
+      <div style="font-size:.82rem;color:rgba(255,255,255,.55);">
+        Abonnez-vous pour être visible et recevoir des questions et rendez-vous.
+      </div>
+    </div>
+    <a href="{{ route('acteur.abonnement') }}" class="rl-btn" style="background:var(--red);white-space:nowrap;">
+      <i class="fas fa-lock-open"></i> S'abonner — 5 000 FCFA/3 mois
+    </a>
+  </div>
+  @endif
+
   {{-- BANNIÈRE DE BIENVENUE --}}
   <div class="fade-up" style="background:linear-gradient(135deg,#111820 0%,#1a2535 100%);border-radius:var(--radius);padding:28px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px solid rgba(201,168,76,.2);position:relative;overflow:hidden;">
     <div style="position:absolute;right:32px;top:50%;transform:translateY(-50%);font-size:5rem;opacity:.06;">⚖️</div>
@@ -37,7 +55,7 @@
   </div>
 
   {{-- STATS --}}
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;">
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:20px;">
     <div class="rl-stat-card fade-up" style="--accent:var(--gold);animation-delay:.08s">
       <div class="rl-stat-header"><span class="rl-stat-label">Réponses données</span><span>💬</span></div>
       <div class="rl-stat-value">{{ $assigned }}</div>
@@ -63,6 +81,11 @@
           <span style="color:var(--green);font-weight:600;">Tout traité ✓</span>
         @endif
       </div>
+    </div>
+    <div class="rl-stat-card fade-up" style="--accent:var(--purple);animation-delay:.28s">
+      <div class="rl-stat-header"><span class="rl-stat-label">Note moyenne</span><span>⭐</span></div>
+      <div class="rl-stat-value">{{ $moyenneNotes > 0 ? $moyenneNotes.'/5' : '—' }}</div>
+      <div class="rl-stat-sub">{{ $totalNotes }} évaluation(s)</div>
     </div>
   </div>
 
@@ -112,8 +135,11 @@
           ['route'=>'articles.dashboard','icon'=>'📰','title'=>'Mes articles','desc'=>$articles.' article(s) publié(s)'],
           ['route'=>'messages.index','icon'=>'💬','title'=>'Messagerie','desc'=>'Discussions avec clients'],
           ['route'=>'acteur.profile','icon'=>'🪪','title'=>'Mon profil','desc'=>'Photo, description, spécialités'],
+          ['route'=>'acteur.retraits','icon'=>'💸','title'=>'Mes retraits','desc'=>'Gérer vos commissions'],
         ] as $action)
-        <a href="{{ route($action['route']) }}" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);text-decoration:none;transition:background .18s,border-color .18s,transform .15s;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='var(--gold)';this.style.transform='translateX(4px)'" onmouseout="this.style.background='var(--surface2)';this.style.borderColor='var(--border)';this.style.transform='none'">
+        <a href="{{ route($action['route']) }}" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);text-decoration:none;transition:background .18s,border-color .18s,transform .15s;"
+           onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='var(--gold)';this.style.transform='translateX(4px)'"
+           onmouseout="this.style.background='var(--surface2)';this.style.borderColor='var(--border)';this.style.transform='none'">
           <div style="width:36px;height:36px;border-radius:9px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;">{{ $action['icon'] }}</div>
           <div>
             <div style="font-size:.85rem;font-weight:600;color:var(--txt);">{{ $action['title'] }}</div>

@@ -182,4 +182,25 @@ class User extends Authenticatable
     {
         return $this->role === 'client';
     }
+
+        public function isClientAbonne(): bool
+    {
+        if ($this->trial_end && \Carbon\Carbon::parse($this->trial_end)->isFuture()) {
+            return true;
+        }
+        return $this->paiements()
+            ->where('formule', 'annuel')
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '>=', now())
+            ->exists();
+    }
+
+    public function isActeurAbonne(): bool
+    {
+        return $this->paiements()
+            ->where('formule', 'trimestriel')
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '>=', now())
+            ->exists();
+    }
 }

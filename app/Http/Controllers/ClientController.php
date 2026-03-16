@@ -72,9 +72,15 @@ class ClientController extends Controller
      */
     public function actors()
     {
-        $acteurs = User::where('role', 'acteur_juridique')
-            ->orderBy('nom')
-            ->paginate(12);
+       // Récupérer seulement les acteurs abonnés
+$acteurs = User::where('role', 'acteur_juridique')
+    ->whereHas('paiements', function($q) {
+        $q->where('formule', 'trimestriel')
+          ->whereNotNull('expiry_date')
+          ->where('expiry_date', '>=', now());
+    })
+    ->with('profession')
+    ->paginate(12);
 
         return view('client.acteurs', [
             'acteurs'     => $acteurs,
@@ -233,60 +239,46 @@ class ClientController extends Controller
     /**
      * Affiche la page de choix d'abonnement.
      */
-    public function abonnement()
-    {
-        $user         = Auth::user();
-        $subscription = $this->getSubscriptionStatus($user);
-        $historique   = $user->paiements()->orderBy('created_at', 'desc')->get();
+public function abonnement()
+{
+    $user         = Auth::user();
+    $subscription = $this->getSubscriptionStatus($user);
+    $historique   = $user->paiements()
+        ->where('formule', 'annuel')
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        return view('client.abonnement', array_merge($subscription, [
-            'historique'  => $historique,
-            'withSidebar' => true,
-        ]));
-    }
+    return view('client.abonnement', array_merge($subscription, [
+        'historique'  => $historique,
+        'withSidebar' => true,
+    ]));
+}
 
-    /**
-     * Traite le paiement d'un abonnement (sandbox).
-     */
-    public function payerAbonnement(Request $request)
-    {
-        $request->validate([
-            'formule' => 'required|in:mensuel,trimestriel,annuel',
-            'montant' => 'required|integer|min:1000',
-            'methode' => 'required|in:mobile_money,carte',
-        ]);
+public function payerAbonnement(Request $request)
+{
+    $request->validate(['formule' => 'required|in:annuel']);
 
-        $user = Auth::user();
+    $montant = 5000;
+    $mois    = 12;
+    $expiry  = now()->addMonths($mois);
 
-        $durees = [
-            'mensuel'      => 1,
-            'trimestriel'  => 3,
-            'annuel'       => 12,
-        ];
+    $paiement = \App\Models\Paiement::create([
+        'user_id'       => Auth::id(),
+        'montant'       => $montant,
+        'methode'       => 'sandbox',
+        'statut'        => 'paye',
+        'date_paiement' => now(),
+        'formule'       => 'annuel',
+        'expiry_date'   => $expiry,
+    ]);
 
-        $mois      = $durees[$request->formule];
-        $expiry    = now()->addMonths($mois);
+    Auth::user()->update([
+        'is_subscribed'     => true,
+        'subscription_end'  => $expiry,
+    ]);
 
-        // Créer le paiement
-        $paiement =$user->paiements()->create([
-            'montant'       => $request->montant,
-            'methode'       => $request->methode,
-            'statut'        => 'paye',
-            'date_paiement' => now(),
-            'formule'       => $request->formule,
-            'expiry_date'   => $expiry,
-        ]);
+    return redirect()->route('client.abonnement')->with('status', 'Abonnement annuel activé jusqu\'au '.$expiry->format('d/m/Y').'.');
+}
 
-        // Mettre à jour l'abonnement utilisateur
-        $user->update([
-            'is_subscribed'       => true,
-            'subscription_start'  => now(),
-            'subscription_end'    => $expiry,
-        ]);
 
-        return redirect()->route('client.abonnement')
-            ->with('status', 'Abonnement ' . $request->formule . ' activé jusqu\'au ' . $expiry->format('d/m/Y') . ' !');
-    }
-
-    
 }

@@ -51,7 +51,7 @@
         </div>
         <div id="ratingLabel" style="font-size:.85rem;color:var(--txt-muted);">Cliquez pour noter</div>
       </div>
-      <form method="POST" action="#" id="ratingForm" style="margin-top:14px;display:none;">
+     <form method="POST" action="{{ route('articles.noter', $article->id) }}" id="ratingForm" style="display:none;margin-top:16px;">
         @csrf
         <input type="hidden" name="note" id="ratingValue">
         <div class="rl-form-group">

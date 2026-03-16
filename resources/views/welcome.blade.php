@@ -476,6 +476,7 @@
       background: var(--bg2); border: 1px solid var(--border);
       border-radius: var(--radius);
       transition: border-color .2s, transform .2s;
+      cursor: pointer;
     }
     .actor-card:hover { border-color: rgba(194,96,26,.35); transform: translateX(4px); }
     .actor-avatar {
@@ -535,7 +536,7 @@
     }
     .about-visual-main i { font-size: 7rem; color: var(--gold); opacity: .9; position: relative; z-index: 2; }
     .about-badge {
-      position: absolute; bottom: 16px; right: 32px;
+      position: absolute; bottom: -16px; right: 32px;
       background: var(--gold); color: #fff;
       padding: 10px 18px; border-radius: 10px;
       font-size: .8rem; font-weight: 700;
@@ -825,7 +826,14 @@
   <div id="actorsList">
     @php $experts = \App\Models\User::where('role','acteur_juridique')->with('profession')->take(6)->get(); @endphp
     @forelse($experts as $expert)
-    <div class="actor-card reveal" data-name="{{ strtolower($expert->nom) }}" data-prof="{{ strtolower($expert->profession?->nom ?? $expert->profession_libre ?? '') }}">
+    <div class="actor-card reveal"
+         data-name="{{ strtolower($expert->nom) }}"
+         data-prof="{{ strtolower($expert->profession?->nom ?? $expert->profession_libre ?? '') }}"
+         data-nom="{{ $expert->nom }}"
+         data-profession="{{ $expert->profession?->nom ?? $expert->profession_libre ?? 'Expert juridique' }}"
+         data-description="{{ $expert->description ?? 'Expert juridique qualifié disponible pour répondre à vos questions.' }}"
+         data-photo="{{ $expert->photo_professionnelle ? asset('storage/'.$expert->photo_professionnelle) : '' }}"
+         data-initiales="{{ strtoupper(substr($expert->nom,0,2)) }}">
       <div class="actor-avatar">
         @if($expert->photo_professionnelle)
           <img src="{{ asset('storage/'.$expert->photo_professionnelle) }}" alt=""/>
@@ -838,22 +846,29 @@
         <div class="actor-profession">{{ $expert->profession?->nom ?? $expert->profession_libre ?? 'Expert juridique' }}</div>
         <div class="actor-desc">{{ Str::limit($expert->description ?? 'Expert juridique qualifié disponible pour répondre à vos questions.',100) }}</div>
       </div>
-      <a class="btn-actor" href="{{ route('login') }}"><i class="fas fa-arrow-right"></i> Consulter</a>
+      <span class="btn-actor"><i class="fas fa-eye"></i> Voir</span>
     </div>
     @empty
     @foreach([
-      ['ME','Maître Ekpé','Avocat au barreau','Droit des affaires, contrats commerciaux et contentieux civil.'],
-      ['AK','Adjoa Koffi','Notaire','Droit immobilier, successions, donations et actes notariés.'],
-      ['BH','Basile Hounsou','Juriste d\'entreprise','Droit du travail, relations sociales et droit des sociétés.'],
+      ['ME','Maître Ekpé','Avocat au barreau','Droit des affaires, contrats commerciaux et contentieux civil.',''],
+      ['AK','Adjoa Koffi','Notaire','Droit immobilier, successions, donations et actes notariés.',''],
+      ['BH','Basile Hounsou','Juriste d\'entreprise','Droit du travail, relations sociales et droit des sociétés.',''],
     ] as $e)
-    <div class="actor-card reveal" data-name="{{ strtolower($e[1]) }}" data-prof="{{ strtolower($e[2]) }}">
+    <div class="actor-card reveal"
+         data-name="{{ strtolower($e[1]) }}"
+         data-prof="{{ strtolower($e[2]) }}"
+         data-nom="{{ $e[1] }}"
+         data-profession="{{ $e[2] }}"
+         data-description="{{ $e[3] }}"
+         data-photo=""
+         data-initiales="{{ $e[0] }}">
       <div class="actor-avatar">{{ $e[0] }}</div>
       <div class="actor-info">
         <div class="actor-name">{{ $e[1] }}</div>
         <div class="actor-profession">{{ $e[2] }}</div>
         <div class="actor-desc">{{ $e[3] }}</div>
       </div>
-      <a class="btn-actor" href="{{ route('login') }}"><i class="fas fa-arrow-right"></i> Consulter</a>
+      <span class="btn-actor"><i class="fas fa-eye"></i> Voir</span>
     </div>
     @endforeach
     @endforelse
@@ -863,13 +878,150 @@
   </div>
 </section>
 
+{{-- ═══════════════ PANEL EXPERT ═══════════════ --}}
+<div id="expertOverlay" onclick="fermerExpert()" style="
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+  z-index:900;backdrop-filter:blur(3px);transition:opacity .3s;"></div>
+
+<div id="expertPanel" style="
+  position:fixed;top:0;right:-100%;width:100%;max-width:820px;height:100vh;
+  background:#fff;z-index:901;display:flex;flex-direction:row;
+  box-shadow:-8px 0 40px rgba(0,0,0,.18);transition:right .4s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;">
+
+  {{-- PHOTO côté gauche --}}
+  <div id="expertPhoto" style="
+    width:50%;flex-shrink:0;background:#1a2e4a;position:relative;overflow:hidden;">
+    <div id="expertInitiales" style="
+      width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+      font-family:'Playfair Display',serif;font-size:5rem;font-weight:700;
+      color:rgba(194,96,26,.5);background:linear-gradient(135deg,#1a2e4a,#0d1b2e);">
+    </div>
+    <img id="expertImg" src="" alt="" style="
+      position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;"/>
+    {{-- Dégradé bas --}}
+    <div style="position:absolute;bottom:0;left:0;right:0;height:180px;
+      background:linear-gradient(to top,rgba(0,0,0,.7),transparent);"></div>
+    {{-- Nom en bas de la photo --}}
+    <div style="position:absolute;bottom:28px;left:24px;right:24px;">
+      <div id="panelNom" style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:4px;"></div>
+      <div id="panelProfession" style="font-size:.82rem;color:rgba(194,96,26,.9);background:rgba(194,96,26,.15);
+        display:inline-block;padding:3px 12px;border-radius:20px;border:1px solid rgba(194,96,26,.3);"></div>
+    </div>
+  </div>
+
+  {{-- INFOS côté droit --}}
+  <div style="flex:1;display:flex;flex-direction:column;padding:40px 36px;overflow-y:auto;background:#faf8f5;">
+
+    {{-- Bouton retour --}}
+    <button onclick="fermerExpert()" style="
+      display:inline-flex;align-items:center;gap:8px;
+      background:transparent;border:1.5px solid #ddd;border-radius:8px;
+      padding:8px 16px;cursor:pointer;font-family:'DM Sans',sans-serif;
+      font-size:.82rem;color:#666;width:fit-content;margin-bottom:36px;
+      transition:all .15s;">
+      <i class="fas fa-arrow-left"></i> Retour aux experts
+    </button>
+
+    {{-- Label --}}
+    <div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:#c2601a;font-weight:600;margin-bottom:8px;">
+      Profil de l'expert
+    </div>
+
+    {{-- Nom --}}
+    <div id="panelNom2" style="font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;color:#1c2434;margin-bottom:6px;"></div>
+    <div id="panelProfession2" style="font-size:.88rem;color:#c2601a;font-weight:600;margin-bottom:28px;"></div>
+
+    {{-- Séparateur --}}
+    <div style="height:1px;background:linear-gradient(to right,#c2601a33,transparent);margin-bottom:28px;"></div>
+
+    {{-- Description --}}
+    <div style="font-size:.7rem;letter-spacing:1.8px;text-transform:uppercase;color:#999;font-weight:600;margin-bottom:10px;">
+      À propos
+    </div>
+    <div id="panelDesc" style="font-size:.92rem;color:#3a4155;line-height:1.8;margin-bottom:36px;"></div>
+
+    {{-- Séparateur --}}
+    <div style="height:1px;background:#eee;margin-bottom:28px;"></div>
+
+    {{-- Info plateforme --}}
+    <div style="background:linear-gradient(135deg,#1a2e4a,#0d1b2e);border-radius:12px;padding:20px 22px;margin-bottom:28px;">
+      <div style="font-family:'Playfair Display',serif;font-size:.9rem;color:#c2601a;margin-bottom:12px;">
+        💼 Services disponibles
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:.78rem;color:rgba(255,255,255,.65);">
+        <div><i class="fas fa-check" style="color:#c2601a;margin-right:8px;"></i>Questions juridiques en ligne</div>
+        <div><i class="fas fa-check" style="color:#c2601a;margin-right:8px;"></i>Rendez-vous privé (10 000 FCFA)</div>
+        <div><i class="fas fa-check" style="color:#c2601a;margin-right:8px;"></i>Messagerie sécurisée</div>
+      </div>
+    </div>
+
+    {{-- CTA --}}
+    <a href="{{ route('register') }}" style="
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      background:#c2601a;color:#fff;text-decoration:none;
+      padding:14px 24px;border-radius:10px;font-family:'DM Sans',sans-serif;
+      font-size:.9rem;font-weight:600;transition:background .2s;margin-top:auto;">
+      <i class="fas fa-user-plus"></i> Créer un compte pour consulter
+    </a>
+
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.actor-card').forEach(card => {
+  card.addEventListener('click', function() {
+    ouvrirExpert({
+      nom:         this.dataset.nom,
+      profession:  this.dataset.profession,
+      description: this.dataset.description,
+      photo:       this.dataset.photo,
+      initiales:   this.dataset.initiales
+    });
+  });
+});
+function ouvrirExpert(data) {
+  // Photo
+  const img = document.getElementById('expertImg');
+  const ini = document.getElementById('expertInitiales');
+  if(data.photo) {
+    img.src = data.photo;
+    img.style.display = 'block';
+    ini.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    ini.style.display = 'flex';
+    ini.textContent = data.initiales;
+  }
+  // Infos
+  document.getElementById('panelNom').textContent       = data.nom;
+  document.getElementById('panelNom2').textContent      = data.nom;
+  document.getElementById('panelProfession').textContent= data.profession;
+  document.getElementById('panelProfession2').textContent= data.profession;
+  document.getElementById('panelDesc').innerHTML = data.description
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>')
+    .replace(/(^|\n)\s*[-•–]\s*(.+)/g, '$1<div style="display:flex;gap:8px;margin-bottom:4px;"><span style="color:#c2601a;flex-shrink:0;">•</span><span>$2</span></div>');
+  // Ouvrir
+  document.getElementById('expertOverlay').style.display = 'block';
+  document.getElementById('expertPanel').style.right     = '0';
+  document.body.style.overflow = 'hidden';
+}
+function fermerExpert() {
+  document.getElementById('expertPanel').style.right  = '-100%';
+  document.getElementById('expertOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') fermerExpert(); });
+</script>
+
 <!-- À PROPOS -->
 <section id="about">
   <div class="about-grid">
     <div class="about-visual reveal">
       <div class="about-visual-main">
         <i class="fas fa-landmark"></i>
-        <div class="about-badge">Fondé en 2026</div>
+        <div class="about-badge">Fondé en 2024</div>
       </div>
     </div>
     <div class="reveal">

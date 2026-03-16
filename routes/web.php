@@ -68,26 +68,29 @@ Route::middleware(['auth', 'role:acteur_juridique'])->group(function () {
     Route::post('/acteur/profile', [ActeurController::class, 'updateProfile'])->name('acteur.profile.update');
     Route::get('/acteur/questions', [ActeurController::class, 'questions'])->name('acteur.questions');
     Route::post('/acteur/questions/{question}/respond', [ActeurController::class, 'respondToQuestion'])->name('acteur.respondToQuestion');
-    Route::get('/articles/dashboard', [ArticleController::class, 'dashboard'])->name('articles.dashboard');
+   
+});
+ Route::get('/articles/dashboard', [ArticleController::class, 'dashboard'])->name('articles.dashboard');
     Route::get('/articles/create', [ArticleController::class, 'create'])->name('articles.create');
     Route::post('/articles', [ArticleController::class, 'store'])->name('articles.store');
     Route::get('/articles/{id}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
     Route::post('/articles/{id}', [ArticleController::class, 'update'])->name('articles.update');
     Route::delete('/articles/{id}', [ArticleController::class, 'destroy'])->name('articles.destroy');
-});
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 });
 
 // Dans le groupe auth middleware
-Route::delete('/settings', [SettingsController::class, 'destroy'])->name('settings.destroy');
+Route::delete('/settings', [\App\Http\Controllers\SettingsController::class, 'destroy'])->name('settings.destroy');
 
 // Articles publiques (tous les users authentifiés peuvent lire)
 Route::middleware('auth')->group(function () {
     Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');
     Route::get('/articles/{id}', [ArticleController::class, 'show'])->name('articles.show');
     Route::post('/articles/{id}/questions', [ArticleController::class, 'storeQuestion'])->name('articles.storeQuestion');
+    Route::post('/articles/{article}/noter', [ArticleController::class, 'noter'])->name('articles.noter'); // ← ajoute cette ligne
+    
 
     // messaging between clients and actors after profile visit
     Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])
@@ -154,3 +157,12 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/retraits/{retrait}/traiter',  [AdminController::class, 'traiterRetrait'])->name('admin.retraits.traiter');
     Route::post('/retraits/{retrait}/refuser',  [AdminController::class, 'refuserRetrait'])->name('admin.retraits.refuser');
 });
+
+Route::get('/client/abonnement',  [ClientController::class, 'abonnement'])->name('client.abonnement');
+Route::post('/client/abonnement', [ClientController::class, 'payerAbonnement'])->name('client.abonnement.payer');
+
+Route::get('/rdv/paiement/retour',  [RendezVousController::class, 'paiementRetour'])->name('rdv.paiement.retour')->middleware('auth');
+Route::get('/rdv/paiement/annule',  [RendezVousController::class, 'paiementAnnule'])->name('rdv.paiement.annule')->middleware('auth');
+
+Route::get('/acteur/abonnement',  [ActeurController::class, 'abonnement'])->name('acteur.abonnement')->middleware(['auth','role:acteur_juridique']);
+Route::post('/acteur/abonnement', [ActeurController::class, 'payerAbonnement'])->name('acteur.abonnement.payer')->middleware(['auth','role:acteur_juridique']);

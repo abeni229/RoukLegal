@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ArticleController extends Controller
 {
+
+    
     /**
      * Afficher tous les articles (pour les clients)
      */
@@ -88,7 +90,7 @@ class ArticleController extends Controller
     public function edit($id)
     {
         $article = Article::findOrFail($id);
-        $this->authorize('update', $article);
+       if (Auth::id() !== $article->user_id) abort(403);
         
         return view('articles.edit', [
             'article' => $article,
@@ -102,7 +104,7 @@ class ArticleController extends Controller
     public function update(Request $request, $id)
     {
         $article = Article::findOrFail($id);
-        $this->authorize('update', $article);
+       if (Auth::id() !== $article->user_id) abort(403);
         
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -121,7 +123,7 @@ class ArticleController extends Controller
     public function destroy($id)
     {
         $article = Article::findOrFail($id);
-        $this->authorize('delete', $article);
+       if (Auth::id() !== $article->user_id) abort(403);
         
         $article->delete();
 
@@ -167,5 +169,29 @@ class ArticleController extends Controller
         return redirect()->route('articles.show', $articleId)
             ->with('status', 'Votre question a été envoyée à ' . $article->user->nom . '!');
     }
+       public function noter(Request $request, \App\Models\Article $article)
+{
+    
+    $request->validate([
+        'note'        => 'required|integer|min:1|max:5',
+        'commentaire' => 'nullable|string|max:500',
+    ]);
+
+    \App\Models\Notation::updateOrCreate(
+        [
+            'user_id'           => Auth::id(),
+            'acteurjuridique_id'=> $article->user_id,
+        ],
+        [
+            'note'        => $request->note,
+            'commentaire' => $request->commentaire,
+            'question_id' => null,
+        ]
+    );
+
+    return back()->with('status', 'Évaluation soumise avec succès.');
+}
+
+    
 }
 

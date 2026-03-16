@@ -15,25 +15,27 @@ class ActeurController extends Controller
     /**
      * Tableau de bord de l'acteur juridique.
      */
-    public function dashboard()
-    {
-        try {
-            $user      = Auth::user();
-            $stats     = $this->getDashboardStats($user);
-            $profession = $this->resolveProfession($user);
-            $recentQuestions = $this->getRecentQuestions($user);
-
-            return view('acteur.dashboard', array_merge($stats, [
-                'profession'      => $profession,
-                'recentQuestions' => $recentQuestions,
-                'withSidebar'     => true,
-            ]));
-        } catch (\Exception $e) {
-            Log::error('Erreur dashboard acteur : ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Une erreur est survenue lors du chargement.');
-        }
+   public function dashboard()
+{
+    try {
+        $user      = Auth::user();
+        $stats     = $this->getDashboardStats($user);
+        $profession = $this->resolveProfession($user);
+        $recentQuestions = $this->getRecentQuestions($user);
+        $moyenneNotes = \App\Models\Notation::where('acteurjuridique_id', Auth::id())->avg('note');
+        $totalNotes   = \App\Models\Notation::where('acteurjuridique_id', Auth::id())->count();
+        return view('acteur.dashboard', array_merge($stats, [
+            'profession'      => $profession,
+            'recentQuestions' => $recentQuestions,
+            'moyenneNotes'    => round($moyenneNotes ?? 0, 1),
+            'totalNotes'      => $totalNotes,
+            'withSidebar'     => true,
+        ]));
+    } catch (\Exception $e) {
+        Log::error('Erreur dashboard acteur : ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Une erreur est survenue lors du chargement.');
     }
-
+}
     /**
      * Formulaire d'édition du profil.
      */
@@ -242,5 +244,46 @@ public function storeRetrait(Request $request)
     ]);
 
     return redirect()->route('acteur.retraits')->with('status', 'Demande envoyée avec succès.');
+}
+
+public function abonnement()
+{
+    $user = Auth::user();
+    $abonne = $user->isActeurAbonne();
+    $expiry = $user->paiements()
+        ->where('formule','trimestriel')
+        ->whereNotNull('expiry_date')
+        ->where('expiry_date','>=',now())
+        ->first()?->expiry_date;
+
+    $historique = $user->paiements()
+        ->where('formule','trimestriel')
+        ->orderBy('created_at','desc')
+        ->get();
+
+    return view('acteur.abonnement', compact('abonne','expiry','historique'));
+}
+
+public function payerAbonnement(Request $request)
+{
+    $expiry = now()->addMonths(3);
+
+    \App\Models\Paiement::create([
+        'user_id'       => Auth::id(),
+        'montant'       => 5000,
+        'methode'       => 'sandbox',
+        'statut'        => 'paye',
+        'date_paiement' => now(),
+        'formule'       => 'trimestriel',
+        'expiry_date'   => $expiry,
+    ]);
+
+    Auth::user()->update([
+        'is_subscribed'    => true,
+        'subscription_end' => $expiry,
+    ]);
+
+    return redirect()->route('acteur.abonnement')
+        ->with('status', 'Abonnement trimestriel activé jusqu\'au '.$expiry->format('d/m/Y').'.');
 }
 }
