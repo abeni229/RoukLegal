@@ -1092,10 +1092,9 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') fermerExpert();
       </div>
       <p class="footer-desc">Votre partenaire juridique de confiance au Bénin et en Afrique de l'Ouest.</p>
       <div class="footer-social">
-        <a href="#"><i class="fab fa-facebook-f"></i></a>
-        <a href="#"><i class="fab fa-twitter"></i></a>
-        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-        <a href="#"><i class="fab fa-whatsapp"></i></a>
+        <a href="https://www.facebook.com/profile.php?id=61585404126518" target="_blank" rel="noopener"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://www.linkedin.com/in/roukayath-gazaliou?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i></a>
+        <a href="https://wa.me/2290150434710" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
       </div>
     </div>
     <div class="footer-col">
@@ -1110,26 +1109,26 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') fermerExpert();
     <div class="footer-col">
       <h6>Services</h6>
       <ul>
-        <li><a href="#">Questions juridiques</a></li>
-        <li><a href="#">Rendez-vous</a></li>
-        <li><a href="#">Articles</a></li>
-        <li><a href="#">Messagerie</a></li>
+        <li><a href="{{ route('client.questions') }}">Questions juridiques</a></li>
+        <li><a href="{{ route('client.dashboard') }}#rendez-vous">Rendez-vous</a></li>
+        <li><a href="{{ route('articles.index') }}">Articles</a></li>
+        <li><a href="{{ route('messages.index') }}">Messagerie</a></li>
       </ul>
     </div>
     <div class="footer-col">
       <h6>Légal</h6>
       <ul>
-        <li><a href="#">Conditions d'utilisation</a></li>
-        <li><a href="#">Confidentialité</a></li>
-        <li><a href="#">Mentions légales</a></li>
+        <li><a href="{{ route('legal.terms') }}">Conditions d'utilisation</a></li>
+        <li><a href="{{ route('legal.privacy') }}">Confidentialité</a></li>
+        <li><a href="{{ route('legal.mentions') }}">Mentions légales</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom">
     <p>© {{ date('Y') }} RoukLegal. Tous droits réservés. Cotonou, Bénin.</p>
     <div class="footer-bottom-links">
-      <a href="#">Politique de confidentialité</a>
-      <a href="#">Conditions générales</a>
+      <a href="{{ route('legal.privacy') }}">Politique de confidentialité</a>
+      <a href="{{ route('legal.terms') }}">Conditions générales</a>
     </div>
   </div>
 </footer>

@@ -10,6 +10,13 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CreneauController;
 use App\Http\Controllers\RendezVousController;
 
+// Pages légales
+Route::view('/mentions-legales', 'legal.mentions')->name('legal.mentions');
+Route::view('/confidentialite', 'legal.privacy')->name('legal.privacy');
+Route::view('/conditions-utilisation', 'legal.terms')->name('legal.terms');
+
+
+
 
 // Homepage - Show landing page or redirect to dashboard
 Route::get('/', function () {
@@ -26,6 +33,15 @@ Route::get('/', function () {
     $user = Auth::user();
     if ($user->role === null) {
         return redirect()->route('auth.selectRole');
+  
+    
+
+    // Pages légales
+    Route::view('/mentions-legales', 'legal.mentions')->name('legal.mentions');
+    Route::view('/confidentialite', 'legal.privacy')->name('legal.privacy');
+    Route::view('/conditions-utilisation', 'legal.terms')->name('legal.terms');
+
+    // Homepage - Show landing page or redirect to dashboard
     }
     if ($user->role === 'admin') {
         return redirect()->route('admin.dashboard');
