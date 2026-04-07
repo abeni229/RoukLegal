@@ -6,7 +6,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
 class AuthController extends Controller
 {
     /**
@@ -51,33 +53,28 @@ class AuthController extends Controller
     /**
      * Authenticate a user.
      */
-   public function login(Request $request)
-{
-   
-   
-    $credentials = $request->validate([
-    
-        'email'       => 'required|email',
-        'mot_de_passe' => 'required',
-    ]);
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email'       => 'required|email',
+            'mot_de_passe' => 'required',
+        ]);
 
-    $user = User::where('email', $credentials['email'])->first();
+        // Utilisation propre de Laravel Auth avec mapping du mot_de_passe vers password
+        if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['mot_de_passe']])) {
+            $request->session()->regenerate();
+            $user = Auth::user();
 
-    if ($user && Hash::check($credentials['mot_de_passe'], $user->mot_de_passe)) {
-        Auth::login($user);
+            return match($user->role) {
+                'admin'           => redirect()->route('admin.dashboard'),
+                'acteur_juridique' => redirect()->route('acteur.dashboard'),
+                'client'          => redirect()->route('client.dashboard'),
+                default           => redirect()->route('auth.selectRole'),
+            };
+        }
 
-        // ✅ Redirection directe selon le rôle — sans passer par '/'
-        return match($user->role) {
-            'admin'           => redirect()->route('admin.dashboard'),
-            'acteur_juridique' => redirect()->route('acteur.dashboard'),
-            'client'          => redirect()->route('client.dashboard'),
-            default           => redirect()->route('auth.selectRole'),
-        };
+        return back()->withErrors(['email' => 'Identifiants incorrects'])->withInput();
     }
-
-    return back()->withErrors(['email' => 'Identifiants incorrects'])->withInput();
-     
-}
 
     /**
      * Show role selection form.
@@ -122,6 +119,59 @@ class AuthController extends Controller
         } else {
             return redirect()->route('client.dashboard');
         }
+    }
+
+    /**
+     * Show the forgot password form.
+     */
+    public function showForgotPassword()
+    {
+        return view('auth.forgot-password');
+    }
+
+    /**
+     * Send the password reset link (sécurisé via PasswordBroker).
+     */
+    public function sendResetLink(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        
+        $status = Password::sendResetLink($request->only('email'));
+
+        // On affiche toujours un succès par sécurité contre l'énumération d'emails.
+        return back()->with('status', 'Si votre adresse existe chez nous, un lien a été envoyé à votre e-mail (voir dossier spam).');
+    }
+
+    /**
+     * Show the rest password form.
+     */
+    public function showResetForm(Request $request, $token)
+    {
+        return view('auth.reset-password', ['token' => $token]);
+    }
+
+    /**
+     * Perform the password reset safely with custom mot_de_passe column.
+     */
+    public function reset(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $status = Password::reset($request->only('email', 'password', 'password_confirmation', 'token'), function ($user, $password) {
+            $user->forceFill([
+                'mot_de_passe' => Hash::make($password)
+            ])->save();
+        });
+
+        if ($status == Password::PASSWORD_RESET) {
+            return redirect()->route('login')->with('status', 'Votre mot de passe a bien été mis à jour ! Vous pouvez vous reconnecter.');
+        }
+
+        return back()->withErrors(['email' => trans($status)]);
     }
 
     /**

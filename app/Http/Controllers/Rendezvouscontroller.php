@@ -10,6 +10,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\InitierPaiementRequest;
+use App\Services\ReservationService;
 
 class RendezVousController extends Controller
 {
@@ -32,53 +34,19 @@ class RendezVousController extends Controller
         return view('client.reserver', compact('acteur', 'creneaux'));
     }
 
- public function initierPaiement(Request $request, User $acteur)
+ public function initierPaiement(InitierPaiementRequest $request, User $acteur, ReservationService $reservationService)
 {
     abort_if($acteur->role !== 'acteur_juridique', 404);
 
-    $request->validate([
-        'creneau_id' => 'required|exists:creneaux,id',
-        'date_heure' => 'required|date|after:now',
-        'sujet'      => 'required|string|max:255',
-        'methode'    => 'required|in:mobile_money,carte',
-    ]);
-
-    $creneau = Creneau::where('id', $request->creneau_id)
-        ->where('acteurjuridique_id', $acteur->id)
-        ->where('actif', true)->firstOrFail();
-
-    $conflit = RendezVous::where('acteurjuridique_id', $acteur->id)
-        ->where('date_heure', $request->date_heure)
-        ->whereNotIn('statut_paiement', [self::STATUT_REFUSE, self::STATUT_REMBOURSE, 'refuse', 'rembourse'])
-        ->exists();
-
-    if ($conflit) return back()->withErrors(['date_heure' => 'Ce créneau est déjà réservé.']);
-
-    DB::transaction(function () use ($request, $acteur, $creneau) {
-        $rdv = RendezVous::create([
-            'user_id'            => Auth::id(),
-            'acteurjuridique_id' => $acteur->id,
-            'creneau_id'         => $creneau->id,
-            'date_heure'         => $request->date_heure,
-            'sujet'              => $request->sujet,
-            'statut'             => 'en_attente',
-            'montant'            => 10000,
-            'statut_paiement'    => self::STATUT_PAYE,
-            'commission_admin'   => 2000,
-            'commission_acteur'  => 8000,
-        ]);
-
-        $paiement = PaiementRdv::create([
-            'rdv_id'            => $rdv->id,
-            'user_id'           => Auth::id(),
-            'montant'           => 10000,
-            'methode'           => $request->methode,
-            'statut'            => 'confirme',
-            'paygate_reference' => PaiementRdv::genererReference(),
-        ]);
-
-        $rdv->update(['paiement_id' => $paiement->paygate_reference]);
-    });
+    try {
+        $reservationService->reserverAvecPaiement(
+            $request->validated(),
+            $acteur,
+            Auth::id()
+        );
+    } catch (\Exception $e) {
+        return back()->withErrors(['date_heure' => $e->getMessage()]);
+    }
 
     return redirect()->route('client.rendezVous')
         ->with('status', 'RDV réservé et paiement confirmé. En attente de validation admin.');

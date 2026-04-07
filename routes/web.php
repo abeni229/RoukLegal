@@ -9,48 +9,15 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CreneauController;
 use App\Http\Controllers\RendezVousController;
+use App\Http\Controllers\HomeController;
 
 // Pages légales
 Route::view('/mentions-legales', 'legal.mentions')->name('legal.mentions');
 Route::view('/confidentialite', 'legal.privacy')->name('legal.privacy');
 Route::view('/conditions-utilisation', 'legal.terms')->name('legal.terms');
 
-
-
-
 // Homepage - Show landing page or redirect to dashboard
-Route::get('/', function () {
-    if (!Auth::check()) {
-        // récupérer la liste des acteurs juridiques pour la page d'accueil publique
-        $query = \App\Models\User::where('role', 'acteur_juridique')
-                    ->with('profession');
-        $total = $query->count();
-        $actors = $query->take(100)->get();
-        $hasMore = $total > 100;
-        return view('welcome', compact('actors', 'hasMore'));
-    }
-    
-    $user = Auth::user();
-    if ($user->role === null) {
-        return redirect()->route('auth.selectRole');
-  
-    
-
-    // Pages légales
-    Route::view('/mentions-legales', 'legal.mentions')->name('legal.mentions');
-    Route::view('/confidentialite', 'legal.privacy')->name('legal.privacy');
-    Route::view('/conditions-utilisation', 'legal.terms')->name('legal.terms');
-
-    // Homepage - Show landing page or redirect to dashboard
-    }
-    if ($user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
-    } elseif ($user->role === 'acteur_juridique') {
-        return redirect()->route('acteur.dashboard');
-    } else {
-        return redirect()->route('client.dashboard');
-    }
-})->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 
 // Auth
@@ -59,6 +26,11 @@ Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 

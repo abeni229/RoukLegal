@@ -34,6 +34,13 @@ body::before{
 .left{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px;min-height:100vh;background:var(--bg);overflow-y:auto;}
 .form-wrap{width:100%;max-width:460px;padding:20px 0;}
 
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  color:var(--ink-dim);text-decoration:none;font-size:0.85rem;font-weight:500;
+  margin-bottom:20px;transition:color 0.2s;
+}
+.back-btn:hover{color:var(--gold);}
+
 .logo{display:flex;align-items:center;gap:10px;font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--ink);text-decoration:none;margin-bottom:36px;}
 .logo .gavel{width:36px;height:36px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#fff;flex-shrink:0;}
 .logo span{color:var(--gold);}
@@ -123,6 +130,7 @@ body::before{
 <body>
 <div class="left">
   <div class="form-wrap">
+    <a href="{{ route('home') }}" class="back-btn"><i class="fas fa-arrow-left"></i> Retour à l'accueil</a>
 
     <a class="logo" href="{{ route('home') }}">
       <div class="gavel"><i class="fas fa-gavel"></i></div>

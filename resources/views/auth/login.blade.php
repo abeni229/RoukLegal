@@ -39,9 +39,16 @@ body::before{
   flex:1;display:flex;flex-direction:column;
   justify-content:center;align-items:center;
   padding:48px;min-height:100vh;
-  background:var(--bg);
+  background:var(--bg);position:relative;
 }
-.form-wrap{width:100%;max-width:420px;}
+.form-wrap{width:100%;max-width:420px;position:relative;}
+
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  color:var(--ink-dim);text-decoration:none;font-size:0.85rem;font-weight:500;
+  margin-bottom:20px;transition:color 0.2s;
+}
+.back-btn:hover{color:var(--gold);}
 
 .logo{
   display:flex;align-items:center;gap:10px;
@@ -168,6 +175,7 @@ body::before{
 <body>
 <div class="left">
   <div class="form-wrap">
+    <a href="{{ route('home') }}" class="back-btn"><i class="fas fa-arrow-left"></i> Retour à l'accueil</a>
 
     <a class="logo" href="{{ route('home') }}">
       <div class="gavel"><i class="fas fa-gavel"></i></div>
@@ -203,7 +211,7 @@ body::before{
       </div>
       <div class="field-footer">
         <label class="remember"><input type="checkbox" name="remember"> Se souvenir de moi</label>
-        <a class="forgot" href="#">Mot de passe oublié ?</a>
+        <a class="forgot" href="{{ route('password.request') }}">Mot de passe oublié ?</a>
       </div>
       <button type="submit" class="btn-submit"><i class="fas fa-sign-in-alt"></i> Se connecter</button>
     </form>

@@ -394,6 +394,27 @@
   /* ── NO SIDEBAR (pages publiques) ── */
   .rl-main.no-sidebar { margin-left: 0; }
 
+  /* ── MOBILE RESPONSIVE ── */
+  .mobile-menu-btn {
+    display: none; background: transparent; border: none; font-size: 1.2rem;
+    color: var(--ink); cursor: pointer; margin-right: 12px;
+  }
+  @media(max-width: 900px) {
+    .rl-sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      box-shadow: 4px 0 24px rgba(0,0,0,.5);
+    }
+    .rl-sidebar.active {
+      transform: translateX(0);
+    }
+    .rl-main { margin-left: 0; }
+    .rl-topbar { padding: 0 16px; }
+    .rl-content { padding: 16px; min-width: 100vw;}
+    .mobile-menu-btn { display: inline-block; }
+    .rl-table { display: block; overflow-x: auto; white-space: nowrap; }
+  }
+
   @yield('styles')
 </style>
 </head>
@@ -645,7 +666,10 @@
   {{-- TOPBAR --}}
   @auth
   <header class="rl-topbar">
-    <div class="page-title">
+    <div class="page-title" style="display:flex; align-items:center;">
+      <button class="mobile-menu-btn" onclick="document.querySelector('.rl-sidebar').classList.toggle('active')">
+        <i class="fas fa-bars"></i>
+      </button>
       @yield('page-title', 'RoukLegal')
     </div>
     <div class="rl-topbar-right">
@@ -681,6 +705,17 @@
   const d = new Date();
   const el = document.getElementById('rl-date');
   if (el) el.textContent = d.toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // Fermer la sidebar mobile en cliquant à l'extérieur
+  document.addEventListener('click', function(e) {
+    const sidebar = document.querySelector('.rl-sidebar');
+    const menuBtn = document.querySelector('.mobile-menu-btn');
+    if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('active')) {
+      if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+        sidebar.classList.remove('active');
+      }
+    }
+  });
 </script>
 @yield('scripts')
 </body>
