@@ -159,13 +159,19 @@ public function retraits()
 
 public function traiterRetrait(\App\Models\DemandeRetrait $retrait)
 {
+    abort_if($retrait->statut !== 'en_attente', 403);
     $retrait->update(['statut' => 'traite']);
     return back()->with('status', 'Retrait marqué comme traité.');
 }
 
-public function refuserRetrait(\Illuminate\Http\Request $request, \App\Models\DemandeRetrait $retrait)
+public function refuserRetrait(Request $request, \App\Models\DemandeRetrait $retrait)
 {
-    $retrait->update(['statut' => 'refuse', 'note_admin' => $request->note_admin]);
+    $data = $request->validate([
+        'note_admin' => 'nullable|string|max:1000',
+    ]);
+
+    abort_if($retrait->statut !== 'en_attente', 403);
+    $retrait->update(['statut' => 'refuse', 'note_admin' => $data['note_admin'] ?? null]);
     return back()->with('status', 'Retrait refusé.');
 }
 }

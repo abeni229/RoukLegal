@@ -150,6 +150,11 @@ class ArticleController extends Controller
      */
     public function storeQuestion(Request $request, $articleId)
     {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'client' || !$user->canAskQuestions()) {
+            return redirect()->back()->with('error', 'Vous devez être abonné ou en essai pour poser une question.');
+        }
+
         $validated = $request->validate([
             'titre' => 'required|string|max:255',
             'contenu' => 'nullable|string|max:2000',
@@ -169,13 +174,18 @@ class ArticleController extends Controller
         return redirect()->route('articles.show', $articleId)
             ->with('status', 'Votre question a été envoyée à ' . $article->user->nom . '!');
     }
-       public function noter(Request $request, \App\Models\Article $article)
-{
+
+    public function noter(Request $request, \App\Models\Article $article)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'client') {
+            abort(403, 'Action non autorisée.');
+        }
     
-    $request->validate([
-        'note'        => 'required|integer|min:1|max:5',
-        'commentaire' => 'nullable|string|max:500',
-    ]);
+        $request->validate([
+            'note'        => 'required|integer|min:1|max:5',
+            'commentaire' => 'nullable|string|max:500',
+        ]);
 
     \App\Models\Notation::updateOrCreate(
         [

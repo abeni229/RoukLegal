@@ -52,9 +52,17 @@ class MessageController extends Controller
             abort(403);
         }
 
-        // si client, vérifier qu'il a droit à la discussion (abonnement ou essai)
-        if ($me->role === 'client' && !$me->canAccessResponses()) {
-            return redirect()->back()->with('status', 'Vous devez être abonné pour contacter un professionnel.');
+        if ($me->role === 'client') {
+            if (!$me->canAccessResponses()) {
+                return redirect()->back()->with('status', 'Vous devez être abonné pour contacter un professionnel.');
+            }
+            if ($user->role !== 'acteur_juridique') {
+                abort(403, 'Vous ne pouvez contacter que des professionnels.');
+            }
+        }
+
+        if ($me->role === 'acteur_juridique' && !in_array($user->role, ['client', 'admin'])) {
+            abort(403);
         }
 
         $messages = Message::with(['sender', 'receiver'])
@@ -74,9 +82,25 @@ class MessageController extends Controller
     {
         $me = Auth::user();
 
-        // validation similaire à conversation
         if ($me->id === $user->id) {
             abort(404);
+        }
+
+        if (!in_array($me->role, ['client', 'acteur_juridique', 'admin'])) {
+            abort(403);
+        }
+
+        if ($me->role === 'client') {
+            if (!$me->canAccessResponses()) {
+                return redirect()->back()->with('status', 'Vous devez être abonné pour envoyer un message.');
+            }
+            if ($user->role !== 'acteur_juridique') {
+                abort(403, 'Vous ne pouvez contacter que des professionnels.');
+            }
+        }
+
+        if ($me->role === 'acteur_juridique' && !in_array($user->role, ['client', 'admin'])) {
+            abort(403);
         }
 
         $data = $request->validate([

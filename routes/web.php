@@ -58,28 +58,29 @@ Route::middleware(['auth', 'role:acteur_juridique'])->group(function () {
     Route::post('/acteur/questions/{question}/respond', [ActeurController::class, 'respondToQuestion'])->name('acteur.respondToQuestion');
    
 });
- Route::get('/articles/dashboard', [ArticleController::class, 'dashboard'])->name('articles.dashboard');
+Route::middleware(['auth', 'role:acteur_juridique'])->group(function () {
+    Route::get('/articles/dashboard', [ArticleController::class, 'dashboard'])->name('articles.dashboard');
     Route::get('/articles/create', [ArticleController::class, 'create'])->name('articles.create');
     Route::post('/articles', [ArticleController::class, 'store'])->name('articles.store');
     Route::get('/articles/{id}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
     Route::post('/articles/{id}', [ArticleController::class, 'update'])->name('articles.update');
     Route::delete('/articles/{id}', [ArticleController::class, 'destroy'])->name('articles.destroy');
-
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 });
 
-// Dans le groupe auth middleware
-Route::delete('/settings', [\App\Http\Controllers\SettingsController::class, 'destroy'])->name('settings.destroy');
+Route::middleware('auth')->group(function () {
+    Route::delete('/settings', [\App\Http\Controllers\SettingsController::class, 'destroy'])->name('settings.destroy');
+});
 
 // Articles publiques (tous les users authentifiés peuvent lire)
 Route::middleware('auth')->group(function () {
     Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');
     Route::get('/articles/{id}', [ArticleController::class, 'show'])->name('articles.show');
-    Route::post('/articles/{id}/questions', [ArticleController::class, 'storeQuestion'])->name('articles.storeQuestion');
-    Route::post('/articles/{article}/noter', [ArticleController::class, 'noter'])->name('articles.noter'); // ← ajoute cette ligne
-    
-
+    Route::post('/articles/{id}/questions', [ArticleController::class, 'storeQuestion'])
+        ->middleware('role:client')
+        ->name('articles.storeQuestion');
+    Route::post('/articles/{article}/noter', [ArticleController::class, 'noter'])
+        ->middleware('role:client')
+        ->name('articles.noter');
     // messaging between clients and actors after profile visit
     Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])
          ->name('messages.index');
@@ -94,7 +95,7 @@ Route::middleware('auth')->group(function () {
 });
 
 //  CRÉNEAUX (acteur) 
-Route::prefix('acteur')->middleware('auth')->group(function () {
+Route::prefix('acteur')->middleware(['auth','role:acteur_juridique'])->group(function () {
     Route::get('/creneaux',                        [CreneauController::class, 'index'])->name('acteur.creneaux');
     Route::post('/creneaux',                       [CreneauController::class, 'store'])->name('acteur.creneaux.store');
     Route::patch('/creneaux/{creneau}/toggle',     [CreneauController::class, 'toggle'])->name('acteur.creneaux.toggle');
@@ -110,20 +111,15 @@ Route::get('/acteur/{acteur}/creneaux-disponibles', [CreneauController::class, '
     ->name('acteur.creneaux.disponibles');
 
 //RENDEZ-VOUS (client) 
-Route::prefix('client')->middleware('auth')->group(function () {
+Route::prefix('client')->middleware(['auth','role:client'])->group(function () {
     Route::get('/rendez-vous',                     [RendezVousController::class, 'clientIndex'])->name('client.rendezVous');
     Route::get('/reserver/{acteur}',               [RendezVousController::class, 'reserver'])->name('client.reserver');
     Route::post('/reserver/{acteur}',              [RendezVousController::class, 'initierPaiement'])->name('client.reserver.payer');
+    Route::get('/abonnement',                      [ClientController::class, 'abonnement'])->name('client.abonnement');
+    Route::post('/abonnement',                     [ClientController::class, 'payerAbonnement'])->name('client.abonnement.payer');
 });
 
-//  RENDEZ-VOUS (admin) 
-Route::prefix('admin')->middleware('auth')->group(function () {
-    Route::get('/rendez-vous',                     [RendezVousController::class, 'adminIndex'])->name('admin.rendezVous');
-    Route::post('/rendez-vous/{rdv}/valider',      [RendezVousController::class, 'validerAdmin'])->name('admin.rdv.valider');
-    Route::post('/rendez-vous/{rdv}/rembourser',   [RendezVousController::class, 'rembourserAdmin'])->name('admin.rdv.rembourser');
-});
-
-Route::prefix('admin')->middleware('auth')->group(function () {
+Route::prefix('admin')->middleware(['auth','role:admin'])->group(function () {
     Route::get('/dashboard',     [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/utilisateurs',  [AdminController::class, 'utilisateurs'])->name('admin.users');
     Route::get('/paiements',     [AdminController::class, 'paiements'])->name('admin.paiements');
@@ -131,23 +127,18 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/rendez-vous',   [RendezVousController::class, 'adminIndex'])->name('admin.rendezVous');
     Route::post('/rendez-vous/{rdv}/valider',    [RendezVousController::class, 'validerAdmin'])->name('admin.rdv.valider');
     Route::post('/rendez-vous/{rdv}/rembourser', [RendezVousController::class, 'rembourserAdmin'])->name('admin.rdv.rembourser');
-});
-
-// Acteur — retraits
-Route::middleware(['auth'])->group(function () {
-    Route::get('/acteur/retraits',       [ActeurController::class, 'retraits'])->name('acteur.retraits');
-    Route::post('/acteur/retraits',      [ActeurController::class, 'storeRetrait'])->name('acteur.retraits.store');
-});
-
-// Admin — retraits
-Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/retraits',              [AdminController::class, 'retraits'])->name('admin.retraits');
     Route::post('/retraits/{retrait}/traiter',  [AdminController::class, 'traiterRetrait'])->name('admin.retraits.traiter');
     Route::post('/retraits/{retrait}/refuser',  [AdminController::class, 'refuserRetrait'])->name('admin.retraits.refuser');
 });
 
-Route::get('/client/abonnement',  [ClientController::class, 'abonnement'])->name('client.abonnement');
-Route::post('/client/abonnement', [ClientController::class, 'payerAbonnement'])->name('client.abonnement.payer');
+// Acteur — retraits
+Route::middleware(['auth','role:acteur_juridique'])->group(function () {
+    Route::get('/acteur/retraits',       [ActeurController::class, 'retraits'])->name('acteur.retraits');
+    Route::post('/acteur/retraits',      [ActeurController::class, 'storeRetrait'])->name('acteur.retraits.store');
+});
+
+// Admin — retraits (consolidated in admin group)
 
 Route::get('/rdv/paiement/retour',  [RendezVousController::class, 'paiementRetour'])->name('rdv.paiement.retour')->middleware('auth');
 Route::get('/rdv/paiement/annule',  [RendezVousController::class, 'paiementAnnule'])->name('rdv.paiement.annule')->middleware('auth');
